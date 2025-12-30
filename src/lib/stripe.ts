@@ -177,33 +177,76 @@ export async function getAccountLink(
 }
 
 /**
+ * Virtual card configuration for an agent.
+ */
+export interface VirtualCardConfig {
+  /** Organization UUID (for metadata tagging) */
+  organizationId: string;
+  /** Agent UUID (for metadata tagging) */
+  agentId: string;
+  /** Agent/project name for display */
+  agentName: string;
+  /** Monthly spending limit in cents (BigInt) */
+  spendLimitCents: bigint;
+  /** Optional client UUID (for client-specific agents) */
+  clientId?: string;
+  /** Cardholder billing address */
+  billing?: {
+    line1: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country?: string;
+  };
+  /** Allowed merchant category codes (comma-separated or array) */
+  allowedCategories?: string[];
+  /** Blocked merchant category codes (comma-separated or array) */
+  blockedCategories?: string[];
+}
+
+/**
  * Create a virtual card for an agent/project.
- * Uses Stripe Issuing to create a card linked to the organization's account.
+ * 
+ * PLATFORM ISSUING: Cards are issued on the Switchboard platform account,
+ * NOT on individual agency connected accounts. Cards are tagged with
+ * organization_id and agent_id in metadata for attribution.
  * 
  * CRITICAL: Amounts are in cents as BigInt. Never use number/float.
  * 
- * @param accountId - Stripe Connected Account ID (organization)
- * @param agentName - Name/identifier for the agent (e.g., "CustomerSupportBot")
- * @param spendLimitCents - Monthly spending limit in cents (BigInt)
- * @param metadata - Additional metadata (client_id, project_id, etc.)
+ * @param config - Virtual card configuration
  * @returns Stripe Card object
  * 
  * @example
  * ```typescript
- * const card = await createVirtualCard(
- *   accountId,
- *   "CustomerSupportBot",
- *   50000n,  // $500.00 monthly limit
- *   { client_id: "client_123", project_id: "proj_456" }
- * );
+ * const card = await createVirtualCard({
+ *   organizationId: "org_123",
+ *   agentId: "agent_456",
+ *   agentName: "CustomerSupportBot",
+ *   spendLimitCents: 50000n,  // $500.00 monthly limit
+ *   clientId: "client_789",
+ *   billing: {
+ *     line1: "123 Main St",
+ *     city: "San Francisco",
+ *     state: "CA",
+ *     postalCode: "94102",
+ *   },
+ * });
  * ```
  */
 export async function createVirtualCard(
-  accountId: string,
-  agentName: string,
-  spendLimitCents: bigint,
-  metadata?: Record<string, string>
+  config: VirtualCardConfig
 ): Promise<Stripe.Issuing.Card> {
+  const {
+    organizationId,
+    agentId,
+    agentName,
+    spendLimitCents,
+    clientId,
+    billing,
+    allowedCategories,
+    blockedCategories,
+  } = config;
+
   try {
     const stripe = getStripeClient();
 
@@ -220,55 +263,67 @@ export async function createVirtualCard(
       throw new Error("Spend limit exceeds safe integer range");
     }
 
+    // Metadata for attribution (used in webhooks for rebilling)
+    const cardMetadata: Record<string, string> = {
+      organization_id: organizationId,
+      agent_id: agentId,
+      agent_name: agentName,
+      spend_limit_cents: spendLimitCents.toString(),
+      created_by: "switchboard",
+      platform: "switchboard",
+    };
+
+    if (clientId) {
+      cardMetadata.client_id = clientId;
+    }
+
     // Create cardholder first (required for Issuing)
+    // Cardholder represents the "agent" in our system
     const cardholder = await stripe.issuing.cardholders.create({
       name: agentName,
       type: "individual",
-      email: metadata?.email,
-      phone_number: metadata?.phone,
       status: "active",
       billing: {
         address: {
-          line1: metadata?.address_line1 || "N/A",
-          city: metadata?.city || "N/A",
-          state: metadata?.state || "N/A",
-          postal_code: metadata?.postal_code || "00000",
-          country: metadata?.country || "US",
+          line1: billing?.line1 || "Platform Agent",
+          city: billing?.city || "San Francisco",
+          state: billing?.state || "CA",
+          postal_code: billing?.postalCode || "94102",
+          country: billing?.country || "US",
         },
       },
-      metadata: {
-        ...metadata,
-        agent_name: agentName,
-        created_by: "switchboard",
-      },
+      metadata: cardMetadata,
     });
 
-    // Create the virtual card
+    // Build spending controls
+    const spendingControls: Stripe.Issuing.CardCreateParams.SpendingControls = {
+      spending_limits: [
+        {
+          amount: spendLimitNumber,
+          interval: "monthly",
+        },
+      ],
+    };
+
+    if (allowedCategories && allowedCategories.length > 0) {
+      spendingControls.allowed_categories =
+        allowedCategories as Stripe.Issuing.CardCreateParams.SpendingControls.AllowedCategory[];
+    }
+
+    if (blockedCategories && blockedCategories.length > 0) {
+      spendingControls.blocked_categories =
+        blockedCategories as Stripe.Issuing.CardCreateParams.SpendingControls.BlockedCategory[];
+    }
+
+    // Create the virtual card on PLATFORM account
+    // Cards are NOT created on connected accounts - all issuing is centralized
     const card = await stripe.issuing.cards.create({
       cardholder: cardholder.id,
       currency: "usd",
       type: "virtual",
       status: "active",
-      spending_controls: {
-        spending_limits: [
-          {
-            amount: spendLimitNumber,
-            interval: "monthly",
-          },
-        ],
-        allowed_categories: metadata?.allowed_categories
-          ? (metadata.allowed_categories.split(",") as Stripe.Issuing.CardCreateParams.SpendingControls.AllowedCategory[])
-          : undefined,
-        blocked_categories: metadata?.blocked_categories
-          ? (metadata.blocked_categories.split(",") as Stripe.Issuing.CardCreateParams.SpendingControls.BlockedCategory[])
-          : undefined,
-      },
-      metadata: {
-        ...metadata,
-        agent_name: agentName,
-        spend_limit_cents: spendLimitCents.toString(),
-        created_by: "switchboard",
-      },
+      spending_controls: spendingControls,
+      metadata: cardMetadata,
     });
 
     return card;
@@ -278,9 +333,11 @@ export async function createVirtualCard(
       action: "create_virtual_card",
       resourceType: "stripe_card",
       error,
+      organizationId,
       metadata: {
-        account_id: accountId,
+        agent_id: agentId,
         agent_name: agentName,
+        client_id: clientId,
         spend_limit_cents: spendLimitCents.toString(),
       },
     });

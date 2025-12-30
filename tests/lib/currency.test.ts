@@ -2,15 +2,27 @@ import {
   dollarsToCents,
   centsToDollars,
   formatCurrency,
+  formatCentsAsDecimal,
   addCents,
   subtractCents,
-  multiplyCents,
+  multiplyCentsInt,
+  divideCentsInt,
+  applyBasisPoints,
   percentageOfCents,
   applyMarkup,
+  applyMarkupBasisPoints,
+  splitCents,
   isNegative,
   isZero,
+  isPositive,
   absCents,
+  minCents,
+  maxCents,
   compareCents,
+  sumCents,
+  percentToBasisPoints,
+  basisPointsToPercent,
+  parseCents,
   type CentsAmount,
 } from "@/lib/types/currency";
 
@@ -37,9 +49,14 @@ describe("Currency Utilities", () => {
     it("should handle negative amounts", () => {
       expect(dollarsToCents(-10.5)).toBe(-1050n);
     });
+
+    it("should accept string inputs", () => {
+      expect(dollarsToCents("10.50")).toBe(1050n);
+      expect(dollarsToCents("10.999")).toBe(1100n);
+    });
   });
 
-  describe("centsToDollars", () => {
+  describe("centsToDollars (deprecated - display only)", () => {
     it("should convert cents to dollars", () => {
       expect(centsToDollars(1000n)).toBe(10);
       expect(centsToDollars(1050n)).toBe(10.5);
@@ -49,6 +66,14 @@ describe("Currency Utilities", () => {
 
     it("should handle negative amounts", () => {
       expect(centsToDollars(-1050n)).toBe(-10.5);
+    });
+  });
+
+  describe("parseCents", () => {
+    it("should parse string cents to BigInt", () => {
+      expect(parseCents("1050")).toBe(1050n);
+      expect(parseCents("-500")).toBe(-500n);
+      expect(parseCents("0")).toBe(0n);
     });
   });
 
@@ -72,6 +97,34 @@ describe("Currency Utilities", () => {
     });
   });
 
+  describe("formatCentsAsDecimal", () => {
+    it("should format cents as decimal string", () => {
+      expect(formatCentsAsDecimal(1050n)).toBe("10.50");
+      expect(formatCentsAsDecimal(100n)).toBe("1.00");
+      expect(formatCentsAsDecimal(-500n)).toBe("-5.00");
+    });
+
+    it("should support custom decimal places", () => {
+      expect(formatCentsAsDecimal(1050n, 0)).toBe("11");
+      expect(formatCentsAsDecimal(1050n, 4)).toBe("10.5000");
+    });
+  });
+
+  describe("basis points", () => {
+    it("should convert percent to basis points", () => {
+      expect(percentToBasisPoints(15)).toBe(1500n);
+      expect(percentToBasisPoints(100)).toBe(10000n);
+      expect(percentToBasisPoints(0.5)).toBe(50n);
+      expect(percentToBasisPoints(15.5)).toBe(1550n);
+    });
+
+    it("should convert basis points to percent", () => {
+      expect(basisPointsToPercent(1500n)).toBe(15);
+      expect(basisPointsToPercent(10000n)).toBe(100);
+      expect(basisPointsToPercent(50n)).toBe(0.5);
+    });
+  });
+
   describe("arithmetic operations", () => {
     it("should add cents correctly", () => {
       expect(addCents(1000n, 500n)).toBe(1500n);
@@ -83,35 +136,63 @@ describe("Currency Utilities", () => {
       expect(subtractCents(100n, 200n)).toBe(-100n);
     });
 
-    it("should multiply cents correctly", () => {
-      expect(multiplyCents(1000n, 2)).toBe(2000n);
-      expect(multiplyCents(1000n, 1.5)).toBe(1500n);
-      expect(multiplyCents(1000n, 0.5)).toBe(500n);
+    it("should multiply cents by integer correctly", () => {
+      expect(multiplyCentsInt(1000n, 2n)).toBe(2000n);
+      expect(multiplyCentsInt(1000n, 0n)).toBe(0n);
     });
 
-    it("should round multiplication to nearest cent", () => {
-      expect(multiplyCents(1000n, 1.015)).toBe(1015n);
-      expect(multiplyCents(1000n, 1.014)).toBe(1014n);
+    it("should divide cents by integer correctly", () => {
+      expect(divideCentsInt(1000n, 2n)).toBe(500n);
+      expect(divideCentsInt(1000n, 3n)).toBe(333n); // Integer division
+    });
+
+    it("should throw on division by zero", () => {
+      expect(() => divideCentsInt(1000n, 0n)).toThrow("Division by zero");
+    });
+  });
+
+  describe("applyBasisPoints (pure BigInt percentage)", () => {
+    it("should calculate percentage using basis points", () => {
+      // 15% of $100.00 = $15.00
+      expect(applyBasisPoints(10000n, 1500n)).toBe(1500n);
+      // 100% of $100.00 = $100.00
+      expect(applyBasisPoints(10000n, 10000n)).toBe(10000n);
+      // 50% of $100.00 = $50.00
+      expect(applyBasisPoints(10000n, 5000n)).toBe(5000n);
+    });
+
+    it("should handle decimal percentages via basis points", () => {
+      // 15.5% of $100.00 = $15.50
+      expect(applyBasisPoints(10000n, 1550n)).toBe(1550n);
+      // 0.5% of $100.00 = $0.50
+      expect(applyBasisPoints(10000n, 50n)).toBe(50n);
+    });
+
+    it("should round to nearest cent", () => {
+      // 33.33% of $100.00 should round properly
+      // 10000 * 3333 + 5000 = 33335000
+      // 33335000 / 10000 = 3333 (with rounding)
+      expect(applyBasisPoints(10000n, 3333n)).toBe(3333n);
     });
   });
 
   describe("percentageOfCents", () => {
     it("should calculate percentage correctly", () => {
-      expect(percentageOfCents(1000n, 15)).toBe(150n);
-      expect(percentageOfCents(1000n, 100)).toBe(1000n);
-      expect(percentageOfCents(1000n, 50)).toBe(500n);
+      expect(percentageOfCents(10000n, 15)).toBe(1500n);
+      expect(percentageOfCents(10000n, 100)).toBe(10000n);
+      expect(percentageOfCents(10000n, 50)).toBe(5000n);
     });
 
     it("should handle decimal percentages", () => {
-      expect(percentageOfCents(1000n, 15.5)).toBe(155n);
+      expect(percentageOfCents(10000n, 15.5)).toBe(1550n);
     });
   });
 
   describe("applyMarkup", () => {
     it("should apply markup correctly", () => {
-      expect(applyMarkup(1000n, 15)).toBe(1150n);
-      expect(applyMarkup(1000n, 0)).toBe(1000n);
-      expect(applyMarkup(1000n, 100)).toBe(2000n);
+      expect(applyMarkup(10000n, 15)).toBe(11500n);
+      expect(applyMarkup(10000n, 0)).toBe(10000n);
+      expect(applyMarkup(10000n, 100)).toBe(20000n);
     });
 
     it("should handle the agency use case (15% markup)", () => {
@@ -120,6 +201,38 @@ describe("Currency Utilities", () => {
       const withMarkup = applyMarkup(baseCost, 15);
       expect(withMarkup).toBe(11500n);
       expect(formatCurrency(withMarkup)).toBe("$115.00");
+    });
+  });
+
+  describe("applyMarkupBasisPoints", () => {
+    it("should apply markup using basis points", () => {
+      // 15% markup = 1500 basis points
+      expect(applyMarkupBasisPoints(10000n, 1500n)).toBe(11500n);
+      // 15.5% markup = 1550 basis points
+      expect(applyMarkupBasisPoints(10000n, 1550n)).toBe(11550n);
+    });
+  });
+
+  describe("splitCents", () => {
+    it("should split evenly when divisible", () => {
+      const result = splitCents(900n, 3n);
+      expect(result).toEqual([300n, 300n, 300n]);
+      expect(sumCents(result)).toBe(900n);
+    });
+
+    it("should distribute remainder to first portions", () => {
+      const result = splitCents(1000n, 3n);
+      expect(result).toEqual([334n, 333n, 333n]);
+      expect(sumCents(result)).toBe(1000n);
+    });
+
+    it("should handle single split", () => {
+      expect(splitCents(1000n, 1n)).toEqual([1000n]);
+    });
+
+    it("should throw for zero or negative parts", () => {
+      expect(() => splitCents(1000n, 0n)).toThrow("Parts must be positive");
+      expect(() => splitCents(1000n, -1n)).toThrow("Parts must be positive");
     });
   });
 
@@ -136,16 +249,38 @@ describe("Currency Utilities", () => {
       expect(isZero(-1n)).toBe(false);
     });
 
+    it("should detect positive amounts", () => {
+      expect(isPositive(1n)).toBe(true);
+      expect(isPositive(0n)).toBe(false);
+      expect(isPositive(-1n)).toBe(false);
+    });
+
     it("should get absolute value", () => {
       expect(absCents(-100n)).toBe(100n);
       expect(absCents(100n)).toBe(100n);
       expect(absCents(0n)).toBe(0n);
     });
 
+    it("should get min value", () => {
+      expect(minCents(100n, 200n)).toBe(100n);
+      expect(minCents(200n, 100n)).toBe(100n);
+    });
+
+    it("should get max value", () => {
+      expect(maxCents(100n, 200n)).toBe(200n);
+      expect(maxCents(200n, 100n)).toBe(200n);
+    });
+
     it("should compare amounts correctly", () => {
       expect(compareCents(100n, 200n)).toBe(-1);
       expect(compareCents(200n, 100n)).toBe(1);
       expect(compareCents(100n, 100n)).toBe(0);
+    });
+
+    it("should sum amounts correctly", () => {
+      expect(sumCents([100n, 200n, 300n])).toBe(600n);
+      expect(sumCents([])).toBe(0n);
+      expect(sumCents([100n])).toBe(100n);
     });
   });
 
@@ -160,5 +295,29 @@ describe("Currency Utilities", () => {
       expect(correct).toBe(1100n);
     });
   });
-});
 
+  describe("Double-entry invariant simulation", () => {
+    it("should demonstrate balanced transaction", () => {
+      // Simulate a transaction with multiple entries
+      const entries: Array<{ amount: bigint }> = [
+        { amount: 10000n },  // Debit: Platform Cash +$100
+        { amount: -10000n }, // Credit: Agency Deposits -$100
+      ];
+
+      const sum = sumCents(entries.map(e => e.amount));
+      expect(sum).toBe(0n); // Balanced transaction
+    });
+
+    it("should demonstrate unbalanced transaction detection", () => {
+      // Simulate an unbalanced transaction
+      const entries: Array<{ amount: bigint }> = [
+        { amount: 10000n },  // Debit: +$100
+        { amount: -9000n },  // Credit: -$90 (missing $10!)
+      ];
+
+      const sum = sumCents(entries.map(e => e.amount));
+      expect(sum).not.toBe(0n); // Unbalanced!
+      expect(sum).toBe(1000n); // Missing $10
+    });
+  });
+});
