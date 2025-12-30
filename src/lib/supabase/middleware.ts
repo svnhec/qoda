@@ -61,9 +61,12 @@ export async function updateSession(request: NextRequest) {
     error: authError,
   } = await supabase.auth.getUser();
 
+  const pathname = request.nextUrl.pathname;
+
   // Check if accessing protected route
-  const isProtectedRoute = request.nextUrl.pathname.startsWith("/dashboard");
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
+  const isProtectedRoute = pathname.startsWith("/dashboard");
+  const isAuthRoute = pathname.startsWith("/auth");
+  const isSignOutRoute = pathname === "/auth/signout";
 
   // If accessing protected route without auth, redirect to login
   if (isProtectedRoute && (!user || authError)) {
@@ -73,7 +76,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   // If accessing auth routes while authenticated, redirect to dashboard
-  if (isAuthRoute && user && !authError) {
+  // IMPORTANT: Allow /auth/signout to be accessed while authenticated.
+  if (isAuthRoute && !isSignOutRoute && user && !authError) {
     const redirectUrl = new URL("/dashboard", request.url);
     return NextResponse.redirect(redirectUrl);
   }

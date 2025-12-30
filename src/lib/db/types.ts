@@ -224,6 +224,223 @@ export const SYSTEM_ACCOUNT_CODES = {
 } as const;
 
 // -----------------------------------------------------------------------------
+// CLIENTS
+// -----------------------------------------------------------------------------
+
+export interface Client {
+  id: string;
+  organization_id: string;
+  name: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  stripe_subscription_item_id: string | null;
+  stripe_product_id: string | null;
+  stripe_price_id: string | null;
+  is_active: boolean;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientInsert {
+  id?: string;
+  organization_id: string;
+  name: string;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  stripe_subscription_item_id?: string | null;
+  stripe_product_id?: string | null;
+  stripe_price_id?: string | null;
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ClientUpdate {
+  name?: string;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  stripe_subscription_item_id?: string | null;
+  stripe_product_id?: string | null;
+  stripe_price_id?: string | null;
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+// -----------------------------------------------------------------------------
+// AGENTS
+// -----------------------------------------------------------------------------
+
+export interface Agent {
+  id: string;
+  organization_id: string;
+  client_id: string | null;
+  name: string;
+  description: string | null;
+  monthly_budget_cents: CentsAmount;
+  current_spend_cents: CentsAmount;
+  reset_date: string; // DATE as ISO string
+  is_active: boolean;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentInsert {
+  id?: string;
+  organization_id: string;
+  client_id?: string | null;
+  name: string;
+  description?: string | null;
+  monthly_budget_cents?: CentsAmount;
+  current_spend_cents?: CentsAmount;
+  reset_date?: string; // DATE as ISO string
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AgentUpdate {
+  name?: string;
+  description?: string | null;
+  client_id?: string | null;
+  monthly_budget_cents?: CentsAmount;
+  current_spend_cents?: CentsAmount;
+  reset_date?: string;
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+// -----------------------------------------------------------------------------
+// VIRTUAL CARDS
+// -----------------------------------------------------------------------------
+
+export interface VirtualCard {
+  id: string; // Stripe card ID
+  agent_id: string;
+  organization_id: string;
+  stripe_cardholder_id: string;
+  last4: string;
+  brand: string;
+  exp_month: number;
+  exp_year: number;
+  spending_limit_cents: CentsAmount;
+  current_spend_cents: CentsAmount;
+  is_active: boolean;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VirtualCardInsert {
+  id: string; // Stripe card ID
+  agent_id: string;
+  organization_id: string;
+  stripe_cardholder_id: string;
+  last4: string;
+  brand: string;
+  exp_month: number;
+  exp_year: number;
+  spending_limit_cents: CentsAmount;
+  current_spend_cents?: CentsAmount;
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface VirtualCardUpdate {
+  spending_limit_cents?: CentsAmount;
+  current_spend_cents?: CentsAmount;
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+// -----------------------------------------------------------------------------
+// TRANSACTION LOGS
+// -----------------------------------------------------------------------------
+
+export type TransactionStatus = "pending" | "approved" | "declined" | "reversed";
+
+export interface TransactionLog {
+  id: string;
+  organization_id: string;
+  agent_id: string;
+  client_id: string | null;
+  card_id: string;
+  stripe_transaction_id: string;
+  stripe_authorization_id: string | null;
+  amount_cents: CentsAmount;
+  currency: string;
+  merchant_name: string;
+  merchant_category: string | null;
+  merchant_location: string | null;
+  description: string | null;
+  status: TransactionStatus;
+  rebilled: boolean;
+  rebill_period_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TransactionLogInsert {
+  id?: string;
+  organization_id: string;
+  agent_id: string;
+  client_id?: string | null;
+  card_id: string;
+  stripe_transaction_id: string;
+  stripe_authorization_id?: string | null;
+  amount_cents: CentsAmount;
+  currency?: string;
+  merchant_name: string;
+  merchant_category?: string | null;
+  merchant_location?: string | null;
+  description?: string | null;
+  status?: TransactionStatus;
+  rebilled?: boolean;
+  rebill_period_id?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export interface TransactionLogUpdate {
+  status?: TransactionStatus;
+  rebilled?: boolean;
+  rebill_period_id?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+// -----------------------------------------------------------------------------
+// AUTHORIZATIONS LOG
+// -----------------------------------------------------------------------------
+
+export interface AuthorizationLog {
+  id: string;
+  stripe_authorization_id: string;
+  card_id: string;
+  amount_cents: CentsAmount;
+  merchant_name: string | null;
+  merchant_category: string | null;
+  approved: boolean;
+  decline_code: string | null;
+  created_at: string;
+}
+
+export interface AuthorizationLogInsert {
+  id?: string;
+  stripe_authorization_id: string;
+  card_id: string;
+  amount_cents: CentsAmount;
+  merchant_name?: string | null;
+  merchant_category?: string | null;
+  approved: boolean;
+  decline_code?: string | null;
+}
+
+// -----------------------------------------------------------------------------
 // JOURNAL ENTRIES
 // -----------------------------------------------------------------------------
 
@@ -413,6 +630,31 @@ export interface Database {
         Insert: AuditLogInsert;
         Update: never; // Audit logs are immutable
       };
+      clients: {
+        Row: Client;
+        Insert: ClientInsert;
+        Update: ClientUpdate;
+      };
+      agents: {
+        Row: Agent;
+        Insert: AgentInsert;
+        Update: AgentUpdate;
+      };
+      virtual_cards: {
+        Row: VirtualCard;
+        Insert: VirtualCardInsert;
+        Update: VirtualCardUpdate;
+      };
+      transaction_logs: {
+        Row: TransactionLog;
+        Insert: TransactionLogInsert;
+        Update: TransactionLogUpdate;
+      };
+      authorizations_log: {
+        Row: AuthorizationLog;
+        Insert: AuthorizationLogInsert;
+        Update: never; // Immutable log
+      };
     };
     Views: {
       organization_summary: {
@@ -472,6 +714,20 @@ export interface Database {
           p_org_id: string;
         };
         Returns: OrgRole | null;
+      };
+      get_agent_current_spend: {
+        Args: {
+          p_agent_id: string;
+        };
+        Returns: string; // BigInt as string
+      };
+      get_client_billable_amount: {
+        Args: {
+          p_client_id: string;
+          p_period_start: string; // DATE as ISO string
+          p_period_end: string; // DATE as ISO string
+        };
+        Returns: string; // BigInt as string
       };
     };
     Enums: {
