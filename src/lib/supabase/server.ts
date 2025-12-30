@@ -35,6 +35,12 @@ export async function createClient() {
         }
       },
     },
+    // Enable automatic session refresh
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false, // Handled by middleware
+    },
   });
 }
 
