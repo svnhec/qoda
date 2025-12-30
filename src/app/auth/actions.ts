@@ -65,6 +65,7 @@ export async function signUp(formData: FormData): Promise<AuthActionResult> {
         error,
         metadata: { email },
       });
+
       return { success: false, error: error?.message || "Failed to sign up" };
     }
 
