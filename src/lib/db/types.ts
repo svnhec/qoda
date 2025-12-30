@@ -2,7 +2,9 @@
  * SWITCHBOARD DATABASE TYPES
  * =============================================================================
  * TypeScript types matching the Supabase schema.
- * Generated from: supabase/migrations/001_ledger_schema.sql
+ * Generated from:
+ *   - supabase/migrations/001_ledger_schema.sql
+ *   - supabase/migrations/002_organizations.sql
  * =============================================================================
  */
 
@@ -16,6 +18,8 @@ export type AccountType = "asset" | "liability" | "equity" | "revenue" | "expens
 
 export type PostingStatus = "pending" | "committed" | "settled";
 
+export type OrgRole = "owner" | "admin" | "member" | "viewer";
+
 // -----------------------------------------------------------------------------
 // ORGANIZATIONS
 // -----------------------------------------------------------------------------
@@ -26,6 +30,12 @@ export interface Organization {
   slug: string;
   stripe_customer_id: string | null;
   stripe_account_id: string | null;
+  stripe_account_requirements_due: unknown[];
+  stripe_account_verified_at: string | null;
+  /** Markup percentage as decimal (0.15 = 15%) */
+  markup_percentage: number;
+  billing_email: string | null;
+  billing_address: Record<string, unknown> | null;
   is_active: boolean;
   metadata: Record<string, unknown>;
   created_at: string;
@@ -38,6 +48,11 @@ export interface OrganizationInsert {
   slug: string;
   stripe_customer_id?: string | null;
   stripe_account_id?: string | null;
+  stripe_account_requirements_due?: unknown[];
+  stripe_account_verified_at?: string | null;
+  markup_percentage?: number;
+  billing_email?: string | null;
+  billing_address?: Record<string, unknown> | null;
   is_active?: boolean;
   metadata?: Record<string, unknown>;
 }
@@ -47,8 +62,108 @@ export interface OrganizationUpdate {
   slug?: string;
   stripe_customer_id?: string | null;
   stripe_account_id?: string | null;
+  stripe_account_requirements_due?: unknown[];
+  stripe_account_verified_at?: string | null;
+  markup_percentage?: number;
+  billing_email?: string | null;
+  billing_address?: Record<string, unknown> | null;
   is_active?: boolean;
   metadata?: Record<string, unknown>;
+}
+
+// -----------------------------------------------------------------------------
+// USER PROFILES
+// -----------------------------------------------------------------------------
+
+export interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+  slack: boolean;
+}
+
+export interface UserProfile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  default_organization_id: string | null;
+  timezone: string;
+  notification_preferences: NotificationPreferences;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserProfileInsert {
+  id: string; // Must match auth.users.id
+  full_name?: string | null;
+  avatar_url?: string | null;
+  default_organization_id?: string | null;
+  timezone?: string;
+  notification_preferences?: NotificationPreferences;
+  metadata?: Record<string, unknown>;
+}
+
+export interface UserProfileUpdate {
+  full_name?: string | null;
+  avatar_url?: string | null;
+  default_organization_id?: string | null;
+  timezone?: string;
+  notification_preferences?: NotificationPreferences;
+  metadata?: Record<string, unknown>;
+}
+
+// -----------------------------------------------------------------------------
+// ORGANIZATION MEMBERS
+// -----------------------------------------------------------------------------
+
+export interface OrgMember {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  role: OrgRole;
+  invited_by: string | null;
+  invited_at: string;
+  accepted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrgMemberInsert {
+  id?: string;
+  organization_id: string;
+  user_id: string;
+  role?: OrgRole;
+  invited_by?: string | null;
+  invited_at?: string;
+  accepted_at?: string | null;
+}
+
+export interface OrgMemberUpdate {
+  role?: OrgRole;
+  accepted_at?: string | null;
+}
+
+/**
+ * Organization member with user profile joined.
+ */
+export interface OrgMemberWithProfile extends OrgMember {
+  user_profile: Pick<UserProfile, "full_name" | "avatar_url"> | null;
+}
+
+/**
+ * Organization summary view.
+ */
+export interface OrganizationSummary {
+  id: string;
+  name: string;
+  slug: string;
+  stripe_account_id: string | null;
+  is_stripe_verified: boolean;
+  markup_percentage: number;
+  is_active: boolean;
+  created_at: string;
+  member_count: number;
+  pending_invites: number;
 }
 
 // -----------------------------------------------------------------------------
@@ -273,6 +388,16 @@ export interface Database {
         Insert: OrganizationInsert;
         Update: OrganizationUpdate;
       };
+      user_profiles: {
+        Row: UserProfile;
+        Insert: UserProfileInsert;
+        Update: UserProfileUpdate;
+      };
+      org_members: {
+        Row: OrgMember;
+        Insert: OrgMemberInsert;
+        Update: OrgMemberUpdate;
+      };
       chart_of_accounts: {
         Row: ChartOfAccount;
         Insert: ChartOfAccountInsert;
@@ -287,6 +412,11 @@ export interface Database {
         Row: AuditLog;
         Insert: AuditLogInsert;
         Update: never; // Audit logs are immutable
+      };
+    };
+    Views: {
+      organization_summary: {
+        Row: OrganizationSummary;
       };
     };
     Functions: {
@@ -320,10 +450,34 @@ export interface Database {
         };
         Returns: void;
       };
+      is_org_member: {
+        Args: {
+          p_org_id: string;
+        };
+        Returns: boolean;
+      };
+      has_org_role: {
+        Args: {
+          p_org_id: string;
+          p_min_role: OrgRole;
+        };
+        Returns: boolean;
+      };
+      get_user_org_ids: {
+        Args: Record<string, never>;
+        Returns: string[];
+      };
+      get_org_role: {
+        Args: {
+          p_org_id: string;
+        };
+        Returns: OrgRole | null;
+      };
     };
     Enums: {
       account_type: AccountType;
       posting_status: PostingStatus;
+      org_role: OrgRole;
     };
   };
 }
