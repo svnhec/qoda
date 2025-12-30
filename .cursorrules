@@ -1,0 +1,137 @@
+# =============================================================================
+# SWITCHBOARD DEVELOPMENT RULES
+# =============================================================================
+# These rules are MANDATORY for all code in this repository.
+# Violations will introduce security vulnerabilities, data corruption, or
+# compliance failures. Do not disable or bypass these rules.
+# =============================================================================
+
+## FINANCIAL DATA INTEGRITY
+
+### Currency Representation (CRITICAL)
+- All monetary values MUST be stored and computed as BigInt representing cents
+- NEVER use JavaScript `number` or `float` for currency - floating point errors corrupt financial data
+- Use the `decimal.js` library only for display formatting, never for storage or computation
+- Example: $10.50 = 1050n (BigInt), not 10.5 (number)
+- All database columns storing money MUST be `bigint` type
+- Type alias: `type CentsAmount = bigint`
+
+### Double-Entry Bookkeeping (CRITICAL)
+- Every financial write MUST create balanced debit and credit entries
+- Sum of all debits MUST equal sum of all credits for any transaction
+- Use the `createLedgerEntry()` helper which enforces this invariant
+- Single-sided entries are FORBIDDEN - they break audit trails and reconciliation
+- All ledger mutations MUST be wrapped in a database transaction
+
+### Idempotency (CRITICAL)
+- All financial operations MUST be idempotent using idempotency keys
+- Stripe webhook handlers MUST check `idempotency_key` before processing
+- Re-processing the same webhook MUST NOT create duplicate entries
+- Use `upsert` with unique constraints, not blind `insert`
+
+## SECURITY
+
+### Stripe Webhooks (CRITICAL)
+- ALL Stripe webhook handlers MUST verify the signature using `stripe.webhooks.constructEvent()`
+- NEVER process webhook payloads without signature verification
+- Webhook secret MUST come from environment variable `STRIPE_WEBHOOK_SECRET`
+- Raw request body MUST be used for signature verification (not parsed JSON)
+
+### Supabase Row-Level Security (CRITICAL)
+- RLS MUST be enabled on ALL tables: `ALTER TABLE table_name ENABLE ROW LEVEL SECURITY;`
+- Every table MUST have explicit RLS policies - no tables with RLS enabled but zero policies
+- Default deny: if no policy matches, access is denied
+- Test RLS policies with the anon key before deploying
+
+### Key Management (CRITICAL)
+- `SUPABASE_SERVICE_ROLE_KEY` MUST NEVER be used in client-side code
+- `SUPABASE_SERVICE_ROLE_KEY` MUST NEVER be exposed to the browser
+- Server-side only: API routes, server actions, server components
+- Use `SUPABASE_ANON_KEY` for all client-side Supabase operations
+- Validate that service role operations are truly necessary
+
+### Input Validation
+- All external input MUST be validated with Zod schemas
+- Never trust client-provided IDs - always verify ownership via RLS or explicit checks
+- Sanitize all user input before database insertion
+
+## AUDIT & COMPLIANCE
+
+### Audit Logging (REQUIRED)
+- All errors MUST be logged to the `audit_log` table
+- Include: timestamp, user_id, action, resource_type, resource_id, error_message, metadata
+- Financial operations MUST log: before state, after state, actor, reason
+- Never delete audit logs - they are immutable
+
+### Error Handling
+- Catch all errors and log to audit_log before re-throwing
+- Use the `logAuditError()` helper for consistent formatting
+- Include stack traces in development, sanitize in production
+
+## CODE PATTERNS
+
+### Database Transactions
+```typescript
+// CORRECT: Wrap related operations in a transaction
+await db.transaction(async (tx) => {
+  await tx.insert(ledger_entries).values(debitEntry);
+  await tx.insert(ledger_entries).values(creditEntry);
+});
+
+// WRONG: Separate calls that could partially fail
+await db.insert(ledger_entries).values(debitEntry);
+await db.insert(ledger_entries).values(creditEntry); // Could fail, leaving unbalanced books
+```
+
+### Currency Handling
+```typescript
+// CORRECT: BigInt for all amounts
+const amountCents: bigint = 1050n;
+const total: bigint = amountCents + 500n;
+
+// WRONG: Never use number for money
+const amount: number = 10.50; // FORBIDDEN
+const total = 10.50 + 5.00;   // FORBIDDEN - floating point errors
+```
+
+### Webhook Verification
+```typescript
+// CORRECT: Verify before processing
+const event = stripe.webhooks.constructEvent(
+  rawBody,
+  signature,
+  process.env.STRIPE_WEBHOOK_SECRET!
+);
+
+// WRONG: Processing without verification
+const event = JSON.parse(rawBody); // FORBIDDEN - no signature check
+```
+
+## FILE ORGANIZATION
+
+- `/src/app` - Next.js App Router pages and API routes
+- `/src/lib` - Shared utilities, types, and helpers
+- `/src/lib/db` - Database client and queries
+- `/src/lib/stripe` - Stripe client and helpers
+- `/src/lib/supabase` - Supabase clients (server and browser)
+- `/src/components` - React components
+- `/migrations` - Supabase SQL migrations (sequential, timestamped)
+- `/tests` - Jest unit tests and Playwright E2E tests
+- `/supabase` - Supabase project configuration
+
+## NAMING CONVENTIONS
+
+- Tables: snake_case plural (e.g., `ledger_entries`, `audit_logs`)
+- Columns: snake_case (e.g., `created_at`, `agency_id`)
+- TypeScript types: PascalCase (e.g., `LedgerEntry`, `Agency`)
+- Functions: camelCase (e.g., `createLedgerEntry`, `verifyWebhook`)
+- Files: kebab-case (e.g., `ledger-entry.ts`, `stripe-webhook.ts`)
+- Environment variables: SCREAMING_SNAKE_CASE (e.g., `STRIPE_SECRET_KEY`)
+
+## TESTING REQUIREMENTS
+
+- All financial logic MUST have unit tests
+- Webhook handlers MUST have integration tests with mocked Stripe events
+- RLS policies MUST have tests verifying access control
+- Use `decimal.js` test cases for currency edge cases (rounding, overflow)
+
