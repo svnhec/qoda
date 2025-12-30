@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    typedRoutes: true,
-  },
+  // Disabled typedRoutes - causes issues with dynamic routes and redirects
+  // experimental: {
+  //   typedRoutes: true,
+  // },
   eslint: {
     dirs: ["src"],
   },
