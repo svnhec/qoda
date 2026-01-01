@@ -482,3 +482,6 @@ SELECT
   (SELECT COUNT(*) FROM pg_policies WHERE tablename = 'virtual_cards') AS cards_policies,
   (SELECT COUNT(*) FROM pg_policies WHERE tablename = 'transaction_logs') AS transactions_policies;
 
+
+
+

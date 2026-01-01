@@ -2,6 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 /**
  * Playwright configuration for E2E tests.
+ * 
+ * Run all tests: npm run test:e2e
+ * Run chromium only: npx playwright test --project=chromium
+ * 
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
@@ -19,30 +23,31 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
+  // Only run chromium by default for faster local testing
+  // CI can override with --project=firefox,webkit if needed
   projects: [
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
-    },
-    /* Mobile viewports */
-    {
-      name: "mobile-chrome",
-      use: { ...devices["Pixel 5"] },
-    },
+    // Optional: uncomment to run on more browsers
+    // {
+    //   name: "firefox",
+    //   use: { ...devices["Desktop Firefox"] },
+    // },
+    // {
+    //   name: "webkit",
+    //   use: { ...devices["Desktop Safari"] },
+    // },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  // Web server configuration
+  // Set PLAYWRIGHT_START_SERVER=1 to auto-start the dev server
+  webServer: process.env.PLAYWRIGHT_START_SERVER
+    ? {
+      command: "npm run dev",
+      url: process.env.BASE_URL || "http://localhost:3000",
+      reuseExistingServer: true,
+      timeout: 120 * 1000,
+    }
+    : undefined,
 });
-

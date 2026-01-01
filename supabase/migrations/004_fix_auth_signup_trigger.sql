@@ -152,3 +152,6 @@ COMMENT ON FUNCTION public.handle_new_user IS
   'Auto-creates user_profile and default organization on signup. Hardened with search_path and audit logging.';
 
 
+
+
+

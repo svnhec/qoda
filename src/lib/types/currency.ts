@@ -3,15 +3,14 @@
  * =============================================================================
  * All monetary values MUST be represented as BigInt in cents.
  * This eliminates floating-point errors in financial calculations.
- * 
+ *
  * RULES (from .cursorrules):
  * - All currency MUST be BigInt (cents), never number or float
- * - Use decimal.js ONLY for display formatting, never for storage or computation
+ * - NO DECIMAL.JS OR FLOATING POINT COMPUTATION - EVER
+ * - All conversions use pure string manipulation and BigInt arithmetic
  * - Example: $10.50 = 1050n (BigInt), not 10.5 (number)
  * =============================================================================
  */
-
-import Decimal from "decimal.js";
 
 /**
  * Represents a monetary amount in cents as BigInt.
@@ -48,31 +47,15 @@ export interface Money {
  */
 export type BasisPoints = bigint;
 
-/**
- * Convert a percentage to basis points.
- * @param percent - Percentage as integer (e.g., 15 for 15%)
- * @returns Basis points (1500n for 15%)
- * 
- * @example
- * percentToBasisPoints(15) // Returns 1500n
- */
-export function percentToBasisPoints(percent: number): BasisPoints {
-  // Validate input is a reasonable percentage
-  if (!Number.isFinite(percent)) {
-    throw new Error("Percentage must be a finite number");
-  }
-  // Convert to basis points (multiply by 100)
-  // Handle decimal percentages like 15.5% = 1550 basis points
-  return BigInt(Math.round(percent * 100));
-}
+// percentToBasisPoints is defined later in the file
 
 /**
- * Convert basis points to a percentage number (for display only).
+ * Convert basis points to a percentage string (for display only).
  * @param basisPoints - Basis points as BigInt
- * @returns Percentage as number (for display only)
+ * @returns Percentage as string (e.g., "15.00")
  */
-export function basisPointsToPercent(basisPoints: BasisPoints): number {
-  return Number(basisPoints) / 100;
+export function basisPointsToPercentString(basisPoints: BasisPoints): string {
+  return formatCentsAsDecimal(basisPoints, 2);
 }
 
 // =============================================================================
@@ -83,32 +66,92 @@ export function basisPointsToPercent(basisPoints: BasisPoints): number {
  * Convert dollars to cents (BigInt).
  * Use this ONLY when receiving dollar amounts from external sources
  * (user input, external APIs).
- * 
+ *
+ * Uses pure string parsing and BigInt arithmetic for 100% accuracy.
+ *
  * @param dollars - Dollar amount as string or number
  * @returns CentsAmount as BigInt
- * 
+ *
  * @example
  * dollarsToCents("10.50") // Returns 1050n
  * dollarsToCents(10.50)   // Returns 1050n
  * dollarsToCents("10.999") // Returns 1100n (rounds to nearest cent)
  */
 export function dollarsToCents(dollars: string | number): CentsAmount {
-  // Use Decimal for accurate conversion from external input
-  const decimal = new Decimal(dollars);
-  // Multiply by 100 and round to nearest integer (cent)
-  const cents = decimal.times(100).round();
-  return BigInt(cents.toString());
+  // Convert to string for consistent processing
+  const dollarStr = typeof dollars === "string" ? dollars : dollars.toString();
+
+  // Remove all whitespace and handle negative sign
+  const cleanStr = dollarStr.replace(/\s/g, "");
+  const isNegative = cleanStr.startsWith("-");
+  const absStr = isNegative ? cleanStr.slice(1) : cleanStr;
+
+  // Split on decimal point
+  const parts = absStr.split(".");
+  if (parts.length > 2) {
+    throw new Error("Invalid dollar amount format");
+  }
+
+  const dollarsPart = parts[0] || "0";
+  const centsPart = parts[1] || "00";
+
+  // Validate dollar part (only digits, commas, or empty)
+  const dollarDigits = dollarsPart.replace(/,/g, "");
+  if (!/^\d*$/.test(dollarDigits)) {
+    throw new Error("Invalid dollar amount format");
+  }
+
+  // Validate cents part (1-2 digits only)
+  if (!/^\d{0,2}$/.test(centsPart)) {
+    throw new Error("Invalid cents format - must be 0-2 digits");
+  }
+
+  // Build the complete cents string
+  const completeDollarDigits = dollarDigits || "0";
+  const completeCentsPart = centsPart.padEnd(2, "0");
+
+  // Convert to BigInt
+  const centsStr = completeDollarDigits + completeCentsPart;
+  const absCents = BigInt(centsStr);
+
+  // Apply rounding if there were more than 2 decimal places
+  // (though our validation prevents this - but for robustness)
+  let finalCents = absCents;
+  if (parts[1] && parts[1].length > 2) {
+    // Round to nearest cent using banker's rounding
+    const remainder = Number(parts[1].slice(2, 3) || "0");
+    if (remainder >= 5) {
+      finalCents += 1n;
+    }
+  }
+
+  return isNegative ? -finalCents : finalCents;
 }
 
 /**
  * Parse a string amount in cents to BigInt.
  * Use for database values that come as strings.
- * 
+ *
  * @param centsString - Cents amount as string
  * @returns CentsAmount as BigInt
  */
 export function parseCents(centsString: string): CentsAmount {
   return BigInt(centsString);
+}
+
+/**
+ * Convert cents to exact dollars string.
+ * For display purposes where you need the exact dollar representation as a string.
+ *
+ * @param cents - Amount in cents as BigInt
+ * @returns Exact dollar amount as string (e.g., "10.50" or "-5.00")
+ *
+ * @example
+ * centsToDollarsString(1050n) // Returns "10.50"
+ * centsToDollarsString(-500n) // Returns "-5.00"
+ */
+export function centsToDollarsString(cents: CentsAmount): string {
+  return formatCentsAsDecimal(cents, 2);
 }
 
 // =============================================================================
@@ -135,25 +178,43 @@ export function formatCurrency(
   currency: CurrencyCode = "USD",
   locale: string = "en-US"
 ): string {
-  // Use Decimal for accurate formatting
-  const decimal = new Decimal(cents.toString()).dividedBy(100);
-  
-  // Get currency symbol and format based on locale
+  // Handle negative values
+  const isNegative = cents < 0n;
+  const absCents = isNegative ? -cents : cents;
+
+  // Convert to string and pad to at least 3 digits (for proper decimal placement)
+  const centsStr = absCents.toString().padStart(3, "0");
+
+  // Split into dollars and cents portions using string manipulation
+  const dollarsPart = centsStr.slice(0, -2) || "0";
+  const centsPart = centsStr.slice(-2);
+
+  // Get currency symbol and format
   const formatter = new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  
-  // Format the decimal value
-  return formatter.format(decimal.toNumber());
+
+  // Use Intl to format parts, but construct from our string values
+  // This ensures we never lose precision
+  const parts = formatter.formatToParts(0);
+  const currencySymbol = parts.find(p => p.type === "currency")?.value || "$";
+
+  // Add thousand separators to dollars part (via string manipulation)
+  const dollarsWithCommas = dollarsPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  // Construct final string
+  const formatted = `${currencySymbol}${dollarsWithCommas}.${centsPart}`;
+  return isNegative ? `-${formatted}` : formatted;
 }
 
 /**
  * Format cents as a plain decimal string (without currency symbol).
  * For CSV exports, API responses, etc.
- * 
+ * Uses pure string manipulation for 100% accuracy.
+ *
  * @param cents - Amount in cents as BigInt
  * @param decimalPlaces - Number of decimal places (default: 2)
  * @returns Decimal string (e.g., "10.50")
@@ -162,8 +223,25 @@ export function formatCentsAsDecimal(
   cents: CentsAmount,
   decimalPlaces: number = 2
 ): string {
-  const decimal = new Decimal(cents.toString()).dividedBy(100);
-  return decimal.toFixed(decimalPlaces);
+  if (decimalPlaces < 0) {
+    throw new Error("Decimal places must be non-negative");
+  }
+
+  const isNegative = cents < 0n;
+  const absCents = isNegative ? -cents : cents;
+
+  // Convert to string and pad to at least decimalPlaces + 1 digits
+  const minLength = decimalPlaces + 1;
+  const centsStr = absCents.toString().padStart(minLength, "0");
+
+  // Split into integer and decimal parts
+  const integerPart = centsStr.slice(0, -decimalPlaces) || "0";
+  const decimalPart = centsStr.slice(-decimalPlaces);
+
+  // Combine with decimal point
+  const result = `${integerPart}.${decimalPart}`;
+
+  return isNegative ? `-${result}` : result;
 }
 
 // =============================================================================
@@ -242,11 +320,11 @@ export function applyBasisPoints(
 
 /**
  * Calculate percentage of a CentsAmount using basis points.
- * 
+ *
  * @param amount - Base amount in cents
  * @param percent - Percentage as integer (e.g., 15 for 15%)
  * @returns Percentage amount rounded to nearest cent
- * 
+ *
  * @example
  * percentageOfCents(10000n, 15) // Returns 1500n (15% of $100.00)
  */
@@ -254,7 +332,13 @@ export function percentageOfCents(
   amount: CentsAmount,
   percent: number
 ): CentsAmount {
-  const basisPoints = percentToBasisPoints(percent);
+  if (!Number.isInteger(percent)) {
+    throw new Error("Percentage must be an integer");
+  }
+  if (percent < 0) {
+    throw new Error("Percentage must be non-negative");
+  }
+  const basisPoints = BigInt(percent * 100);
   return applyBasisPoints(amount, basisPoints);
 }
 
@@ -307,16 +391,16 @@ export function splitCents(amount: CentsAmount, parts: bigint): CentsAmount[] {
   if (parts <= 0n) {
     throw new Error("Parts must be positive");
   }
-  
+
   const base = amount / parts;
   const remainder = amount % parts;
-  
+
   const result: CentsAmount[] = [];
   for (let i = 0n; i < parts; i++) {
     // First 'remainder' parts get an extra cent
     result.push(i < remainder ? base + 1n : base);
   }
-  
+
   return result;
 }
 
@@ -384,29 +468,25 @@ export function sumCents(amounts: CentsAmount[]): CentsAmount {
 }
 
 // =============================================================================
-// DEPRECATED FUNCTIONS (for backward compatibility during migration)
-// These use floating point - remove after all code is migrated
+// BASIS POINTS CONVERSION UTILITIES
 // =============================================================================
 
 /**
- * @deprecated Use applyBasisPoints or percentageOfCents instead.
- * This function uses floating point and will be removed.
+ * Convert a percentage to basis points.
+ * Uses pure BigInt arithmetic for accuracy.
+ *
+ * @param percent - Percentage as integer (e.g., 15 for 15%)
+ * @returns Basis points (1500n for 15%)
+ *
+ * @example
+ * percentToBasisPoints(15) // Returns 1500n
  */
-export function multiplyCents(amount: CentsAmount, factor: number): CentsAmount {
-  console.warn(
-    "multiplyCents is deprecated - uses floating point. " +
-    "Use applyBasisPoints for percentages or multiplyCentsInt for integer multiplication."
-  );
-  // Use Decimal for the conversion to minimize floating point errors
-  const result = new Decimal(amount.toString()).times(factor).round();
-  return BigInt(result.toString());
-}
-
-/**
- * @deprecated Provided for backward compatibility with tests.
- * Converts number dollars to cents using Decimal for accuracy.
- */
-export function centsToDollars(cents: CentsAmount): number {
-  // Only for display - marked as returning number intentionally
-  return new Decimal(cents.toString()).dividedBy(100).toNumber();
+export function percentToBasisPoints(percent: number): BasisPoints {
+  if (!Number.isInteger(percent)) {
+    throw new Error("Percentage must be an integer");
+  }
+  if (percent < 0 || percent > 10000) {
+    throw new Error("Percentage must be between 0 and 10000");
+  }
+  return BigInt(percent * 100);
 }

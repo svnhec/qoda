@@ -14,7 +14,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * Uses cookies from the request/response cycle.
  */
 export function createMiddlewareClient(request: NextRequest) {
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
@@ -67,6 +67,8 @@ export async function updateSession(request: NextRequest) {
   const isProtectedRoute = pathname.startsWith("/dashboard");
   const isAuthRoute = pathname.startsWith("/auth");
   const isSignOutRoute = pathname === "/auth/signout";
+  const isCallbackRoute = pathname === "/auth/callback";
+  const isDebugRoute = pathname === "/auth/debug";
 
   // If accessing protected route without auth, redirect to login
   if (isProtectedRoute && (!user || authError)) {
@@ -76,8 +78,12 @@ export async function updateSession(request: NextRequest) {
   }
 
   // If accessing auth routes while authenticated, redirect to dashboard
-  // IMPORTANT: Allow /auth/signout to be accessed while authenticated.
-  if (isAuthRoute && !isSignOutRoute && user && !authError) {
+  // Allow certain routes to be accessed while authenticated:
+  // - /auth/signout - to sign out
+  // - /auth/callback - to complete OAuth/email confirmation
+  // - /auth/debug - for development debugging
+  const allowedWhileAuth = isSignOutRoute || isCallbackRoute || isDebugRoute;
+  if (isAuthRoute && !allowedWhileAuth && user && !authError) {
     const redirectUrl = new URL("/dashboard", request.url);
     return NextResponse.redirect(redirectUrl);
   }

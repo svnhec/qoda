@@ -20,11 +20,11 @@ import type { AuditLogInsert } from "./types";
 export async function logAudit(log: AuditLogInsert): Promise<void> {
   try {
     const supabase = createServiceClient();
-    
+
     const { error } = await supabase
       .from("audit_log")
       .insert(log);
-    
+
     if (error) {
       // Log to console as fallback - never throw from audit logging
       console.error("Failed to write audit log:", error.message, log);
@@ -33,6 +33,105 @@ export async function logAudit(log: AuditLogInsert): Promise<void> {
     // Never throw from audit logging
     console.error("Audit log exception:", err, log);
   }
+}
+
+/**
+ * Standard audit action types for compliance tracking.
+ */
+export type AuditAction =
+  | "CREATE_CARD"
+  | "FREEZE_CARD"
+  | "UNFREEZE_CARD"
+  | "TOP_UP_WALLET"
+  | "CREATE_AGENT"
+  | "UPDATE_AGENT"
+  | "DELETE_AGENT"
+  | "CREATE_CLIENT"
+  | "UPDATE_CLIENT"
+  | "DELETE_CLIENT"
+  | "SETUP_BILLING"
+  | "CANCEL_BILLING"
+  | "PROCESS_AUTHORIZATION"
+  | "PROCESS_SETTLEMENT"
+  | "AGGREGATE_SPEND"
+  | "EXPORT_DATA"
+  | "LOGIN"
+  | "LOGOUT"
+  | "API_ACCESS"
+  | string;
+
+/**
+ * Audit event structure for compliance logging.
+ */
+export interface AuditEvent {
+  /** Action being performed */
+  action: AuditAction;
+  /** Type of resource being affected */
+  resource_type: string;
+  /** ID of the resource (if applicable) */
+  resource_id?: string;
+  /** ID of the user performing the action */
+  user_id?: string;
+  /** ID of the organization context */
+  organization_id?: string;
+  /** Status of the operation */
+  status: "success" | "failure" | "pending";
+  /** Error message if status is failure */
+  error?: string;
+  /** Additional metadata for the event */
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Log an audit event for compliance tracking.
+ * 
+ * This is the primary function for compliance-focused audit logging.
+ * Use this for all significant user actions and system events.
+ * 
+ * @param event - Audit event details
+ * 
+ * @example
+ * ```typescript
+ * await logAuditEvent({
+ *   action: "CREATE_CARD",
+ *   resource_type: "virtual_card",
+ *   resource_id: cardId,
+ *   user_id: currentUser.id,
+ *   organization_id: org.id,
+ *   status: "success",
+ *   metadata: {
+ *     agent_id: agentId,
+ *     card_last4: "4242",
+ *   },
+ * });
+ * ```
+ */
+export async function logAuditEvent(event: AuditEvent): Promise<void> {
+  const {
+    action,
+    resource_type,
+    resource_id,
+    user_id,
+    organization_id,
+    status,
+    error,
+    metadata = {},
+  } = event;
+
+  await logAudit({
+    action,
+    resource_type,
+    resource_id: resource_id ?? null,
+    user_id: user_id ?? null,
+    organization_id: organization_id ?? null,
+    description: `${action} - ${status}`,
+    error_message: status === "failure" ? (error ?? null) : null,
+    metadata: {
+      ...metadata,
+      status,
+      timestamp: new Date().toISOString(),
+    },
+  });
 }
 
 /**
@@ -80,7 +179,7 @@ export async function logAuditError(params: {
   // Extract error message and stack
   let errorMessage: string;
   let errorStack: string | undefined;
-  
+
   if (error instanceof Error) {
     errorMessage = error.message;
     errorStack = process.env.NODE_ENV === "development" ? error.stack : undefined;
@@ -231,8 +330,8 @@ export async function logWebhookEvent(params: {
     action: `webhook_${provider}_${eventType}`,
     resource_type: "webhook_event",
     resource_id: eventId,
-    description: success 
-      ? `Processed ${provider} webhook: ${eventType}` 
+    description: success
+      ? `Processed ${provider} webhook: ${eventType}`
       : `Failed to process ${provider} webhook: ${eventType}`,
     error_message: errorMessage,
     metadata: {
@@ -244,4 +343,7 @@ export async function logWebhookEvent(params: {
     },
   });
 }
+
+
+
 

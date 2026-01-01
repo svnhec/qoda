@@ -213,6 +213,10 @@ export const SYSTEM_ACCOUNT_CODES = {
   AGENCY_DEPOSITS: "2000",
   ACCOUNTS_PAYABLE_VENDORS: "2100",
   DEFERRED_REVENUE: "2200",
+  AGENT_WALLET_LIABILITY: "2300",
+  PENDING_AUTHORIZATION_LIABILITY: "2400",
+  // Assets (Client Receivables)
+  CLIENT_ACCOUNTS_RECEIVABLE: "2500",
   // Revenue
   MARKUP_REVENUE: "4000",
   INTERCHANGE_REVENUE: "4100",
@@ -441,6 +445,269 @@ export interface AuthorizationLogInsert {
 }
 
 // -----------------------------------------------------------------------------
+// DATABASE ROW TYPES (BigInt as Strings)
+// -----------------------------------------------------------------------------
+// PostgreSQL returns bigint columns as strings in JSON.
+// These "Row" types represent the raw database response.
+// Use the parse* functions to convert to domain types with BigInt.
+
+/**
+ * Raw agent row from database (before BigInt conversion).
+ * Use `parseAgent` to convert to `Agent`.
+ */
+export interface AgentRow {
+  id: string;
+  organization_id: string;
+  client_id: string | null;
+  name: string;
+  description: string | null;
+  monthly_budget_cents: string; // PostgreSQL bigint comes as string
+  current_spend_cents: string; // PostgreSQL bigint comes as string
+  reset_date: string;
+  is_active: boolean;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Raw virtual card row from database (before BigInt conversion).
+ * Use `parseVirtualCard` to convert to `VirtualCard`.
+ */
+export interface VirtualCardRow {
+  id: string;
+  agent_id: string;
+  organization_id: string;
+  stripe_cardholder_id: string;
+  last4: string;
+  brand: string;
+  exp_month: number;
+  exp_year: number;
+  spending_limit_cents: string; // PostgreSQL bigint comes as string
+  current_spend_cents: string; // PostgreSQL bigint comes as string
+  is_active: boolean;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Raw transaction log row from database (before BigInt conversion).
+ * Use `parseTransactionLog` to convert to `TransactionLog`.
+ */
+export interface TransactionLogRow {
+  id: string;
+  organization_id: string;
+  agent_id: string;
+  client_id: string | null;
+  card_id: string;
+  stripe_transaction_id: string;
+  stripe_authorization_id: string | null;
+  amount_cents: string; // PostgreSQL bigint comes as string
+  currency: string;
+  merchant_name: string;
+  merchant_category: string | null;
+  merchant_location: string | null;
+  description: string | null;
+  status: TransactionStatus;
+  rebilled: boolean;
+  rebill_period_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Raw authorization log row from database (before BigInt conversion).
+ * Use `parseAuthorizationLog` to convert to `AuthorizationLog`.
+ */
+export interface AuthorizationLogRow {
+  id: string;
+  stripe_authorization_id: string;
+  card_id: string;
+  amount_cents: string; // PostgreSQL bigint comes as string
+  merchant_name: string | null;
+  merchant_category: string | null;
+  approved: boolean;
+  decline_code: string | null;
+  created_at: string;
+}
+
+// -----------------------------------------------------------------------------
+// DATABASE ROW PARSERS (String → BigInt)
+// -----------------------------------------------------------------------------
+// Convert raw database rows to domain types with BigInt money fields.
+
+/**
+ * Convert raw database AgentRow to Agent with BigInt money fields.
+ */
+export function parseAgent(row: AgentRow): Agent {
+  return {
+    ...row,
+    monthly_budget_cents: BigInt(row.monthly_budget_cents),
+    current_spend_cents: BigInt(row.current_spend_cents),
+  };
+}
+
+/**
+ * Parse multiple agent rows.
+ */
+export function parseAgents(rows: AgentRow[]): Agent[] {
+  return rows.map(parseAgent);
+}
+
+/**
+ * Convert raw database VirtualCardRow to VirtualCard with BigInt money fields.
+ */
+export function parseVirtualCard(row: VirtualCardRow): VirtualCard {
+  return {
+    ...row,
+    spending_limit_cents: BigInt(row.spending_limit_cents),
+    current_spend_cents: BigInt(row.current_spend_cents),
+  };
+}
+
+/**
+ * Parse multiple virtual card rows.
+ */
+export function parseVirtualCards(rows: VirtualCardRow[]): VirtualCard[] {
+  return rows.map(parseVirtualCard);
+}
+
+/**
+ * Convert raw database TransactionLogRow to TransactionLog with BigInt money fields.
+ */
+export function parseTransactionLog(row: TransactionLogRow): TransactionLog {
+  return {
+    ...row,
+    amount_cents: BigInt(row.amount_cents),
+  };
+}
+
+/**
+ * Parse multiple transaction log rows.
+ */
+export function parseTransactionLogs(rows: TransactionLogRow[]): TransactionLog[] {
+  return rows.map(parseTransactionLog);
+}
+
+/**
+ * Convert raw database AuthorizationLogRow to AuthorizationLog with BigInt money fields.
+ */
+export function parseAuthorizationLog(row: AuthorizationLogRow): AuthorizationLog {
+  return {
+    ...row,
+    amount_cents: BigInt(row.amount_cents),
+  };
+}
+
+/**
+ * Parse multiple authorization log rows.
+ */
+export function parseAuthorizationLogs(rows: AuthorizationLogRow[]): AuthorizationLog[] {
+  return rows.map(parseAuthorizationLog);
+}
+
+// -----------------------------------------------------------------------------
+// DATABASE ROW SERIALIZERS (BigInt → String)
+// -----------------------------------------------------------------------------
+// Convert domain types to row format for database inserts/updates.
+
+/**
+ * Serialize Agent for database insert/update.
+ * Converts BigInt money fields to strings.
+ */
+export function serializeAgentInsert(
+  data: AgentInsert
+): Omit<AgentInsert, 'monthly_budget_cents' | 'current_spend_cents'> & {
+  monthly_budget_cents?: string;
+  current_spend_cents?: string;
+} {
+  return {
+    ...data,
+    monthly_budget_cents: data.monthly_budget_cents?.toString(),
+    current_spend_cents: data.current_spend_cents?.toString(),
+  };
+}
+
+/**
+ * Serialize Agent update for database.
+ * Converts BigInt money fields to strings.
+ */
+export function serializeAgentUpdate(
+  data: AgentUpdate
+): Omit<AgentUpdate, 'monthly_budget_cents' | 'current_spend_cents'> & {
+  monthly_budget_cents?: string;
+  current_spend_cents?: string;
+} {
+  return {
+    ...data,
+    monthly_budget_cents: data.monthly_budget_cents?.toString(),
+    current_spend_cents: data.current_spend_cents?.toString(),
+  };
+}
+
+/**
+ * Serialize VirtualCard for database insert.
+ * Converts BigInt money fields to strings.
+ */
+export function serializeVirtualCardInsert(
+  data: VirtualCardInsert
+): Omit<VirtualCardInsert, 'spending_limit_cents' | 'current_spend_cents'> & {
+  spending_limit_cents: string;
+  current_spend_cents?: string;
+} {
+  return {
+    ...data,
+    spending_limit_cents: data.spending_limit_cents.toString(),
+    current_spend_cents: data.current_spend_cents?.toString(),
+  };
+}
+
+/**
+ * Serialize VirtualCard update for database.
+ * Converts BigInt money fields to strings.
+ */
+export function serializeVirtualCardUpdate(
+  data: VirtualCardUpdate
+): Omit<VirtualCardUpdate, 'spending_limit_cents' | 'current_spend_cents'> & {
+  spending_limit_cents?: string;
+  current_spend_cents?: string;
+} {
+  return {
+    ...data,
+    spending_limit_cents: data.spending_limit_cents?.toString(),
+    current_spend_cents: data.current_spend_cents?.toString(),
+  };
+}
+
+/**
+ * Serialize TransactionLog for database insert.
+ * Converts BigInt money fields to strings.
+ */
+export function serializeTransactionLogInsert(
+  data: TransactionLogInsert
+): Omit<TransactionLogInsert, 'amount_cents'> & { amount_cents: string } {
+  return {
+    ...data,
+    amount_cents: data.amount_cents.toString(),
+  };
+}
+
+/**
+ * Serialize AuthorizationLog for database insert.
+ * Converts BigInt money fields to strings.
+ */
+export function serializeAuthorizationLogInsert(
+  data: AuthorizationLogInsert
+): Omit<AuthorizationLogInsert, 'amount_cents'> & { amount_cents: string } {
+  return {
+    ...data,
+    amount_cents: data.amount_cents.toString(),
+  };
+}
+
+// -----------------------------------------------------------------------------
 // JOURNAL ENTRIES
 // -----------------------------------------------------------------------------
 
@@ -453,24 +720,24 @@ export interface JournalEntryMetadata {
   stripe_transaction_id?: string;
   stripe_payment_intent_id?: string;
   stripe_charge_id?: string;
-  
+
   /** Agent/client attribution */
   agent_id?: string;
   client_id?: string;
   project_id?: string;
-  
+
   /** Vendor information */
   vendor_name?: string;
   vendor_mcc?: string;
-  
+
   /** Idempotency key for deduplication */
   idempotency_key?: string;
-  
+
   /** Rebilling info */
   rebill_period_id?: string;
   markup_percentage?: number;
   original_amount_cents?: number;
-  
+
   /** Additional context */
   [key: string]: unknown;
 }
@@ -636,23 +903,23 @@ export interface Database {
         Update: ClientUpdate;
       };
       agents: {
-        Row: Agent;
-        Insert: AgentInsert;
-        Update: AgentUpdate;
+        Row: AgentRow; // Returns bigint as string
+        Insert: ReturnType<typeof serializeAgentInsert>;
+        Update: ReturnType<typeof serializeAgentUpdate>;
       };
       virtual_cards: {
-        Row: VirtualCard;
-        Insert: VirtualCardInsert;
-        Update: VirtualCardUpdate;
+        Row: VirtualCardRow; // Returns bigint as string
+        Insert: ReturnType<typeof serializeVirtualCardInsert>;
+        Update: ReturnType<typeof serializeVirtualCardUpdate>;
       };
       transaction_logs: {
-        Row: TransactionLog;
-        Insert: TransactionLogInsert;
+        Row: TransactionLogRow; // Returns bigint as string
+        Insert: ReturnType<typeof serializeTransactionLogInsert>;
         Update: TransactionLogUpdate;
       };
       authorizations_log: {
-        Row: AuthorizationLog;
-        Insert: AuthorizationLogInsert;
+        Row: AuthorizationLogRow; // Returns bigint as string
+        Insert: ReturnType<typeof serializeAuthorizationLogInsert>;
         Update: never; // Immutable log
       };
     };

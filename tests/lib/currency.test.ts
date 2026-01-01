@@ -1,6 +1,6 @@
 import {
   dollarsToCents,
-  centsToDollars,
+  centsToDollarsString,
   formatCurrency,
   formatCentsAsDecimal,
   addCents,
@@ -21,7 +21,7 @@ import {
   compareCents,
   sumCents,
   percentToBasisPoints,
-  basisPointsToPercent,
+  basisPointsToPercentString,
   parseCents,
   type CentsAmount,
 } from "@/lib/types/currency";
@@ -56,16 +56,35 @@ describe("Currency Utilities", () => {
     });
   });
 
-  describe("centsToDollars (deprecated - display only)", () => {
-    it("should convert cents to dollars", () => {
-      expect(centsToDollars(1000n)).toBe(10);
-      expect(centsToDollars(1050n)).toBe(10.5);
-      expect(centsToDollars(1n)).toBe(0.01);
-      expect(centsToDollars(0n)).toBe(0);
+  describe("centsToDollarsString (display only)", () => {
+    it("should convert cents to dollars string", () => {
+      expect(centsToDollarsString(1000n)).toBe("10.00");
+      expect(centsToDollarsString(1050n)).toBe("10.50");
+      expect(centsToDollarsString(1n)).toBe("0.01");
+      expect(centsToDollarsString(0n)).toBe("0.00");
     });
 
     it("should handle negative amounts", () => {
-      expect(centsToDollars(-1050n)).toBe(-10.5);
+      expect(centsToDollarsString(-1050n)).toBe("-10.50");
+    });
+  });
+
+  describe("BigInt-safe markup calculations", () => {
+    it("should calculate markup using basis points", () => {
+      // 15% markup on $100.00 = $115.00
+      const result = applyMarkupBasisPoints(10000n, 1500n);
+      expect(result).toBe(11500n);
+    });
+
+    it("should handle basis points to percent string conversion", () => {
+      expect(basisPointsToPercentString(1500n)).toBe("15.00");
+      expect(basisPointsToPercentString(50n)).toBe("0.50");
+    });
+
+    it("should round markup calculations correctly", () => {
+      // Test rounding: (10000 * 3333 + 5000) / 10000 = 3333 (rounded correctly)
+      const result = applyBasisPoints(10000n, 3333n);
+      expect(result).toBe(3333n);
     });
   });
 
@@ -111,17 +130,16 @@ describe("Currency Utilities", () => {
   });
 
   describe("basis points", () => {
-    it("should convert percent to basis points", () => {
+    it("should convert integer percent to basis points", () => {
       expect(percentToBasisPoints(15)).toBe(1500n);
       expect(percentToBasisPoints(100)).toBe(10000n);
-      expect(percentToBasisPoints(0.5)).toBe(50n);
-      expect(percentToBasisPoints(15.5)).toBe(1550n);
+      expect(percentToBasisPoints(0)).toBe(0n);
     });
 
-    it("should convert basis points to percent", () => {
-      expect(basisPointsToPercent(1500n)).toBe(15);
-      expect(basisPointsToPercent(10000n)).toBe(100);
-      expect(basisPointsToPercent(50n)).toBe(0.5);
+    it("should convert basis points to percent string", () => {
+      expect(basisPointsToPercentString(1500n)).toBe("15.00");
+      expect(basisPointsToPercentString(10000n)).toBe("100.00");
+      expect(basisPointsToPercentString(50n)).toBe("0.50");
     });
   });
 
@@ -183,8 +201,8 @@ describe("Currency Utilities", () => {
       expect(percentageOfCents(10000n, 50)).toBe(5000n);
     });
 
-    it("should handle decimal percentages", () => {
-      expect(percentageOfCents(10000n, 15.5)).toBe(1550n);
+    it("should reject non-integer percentages", () => {
+      expect(() => percentageOfCents(10000n, 15.5)).toThrow("Percentage must be an integer");
     });
   });
 

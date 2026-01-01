@@ -604,3 +604,6 @@ SELECT
   (SELECT COUNT(*) FROM journal_entries) AS entries_count,
   (SELECT COALESCE(SUM(amount), 0) FROM journal_entries) AS total_balance;
 
+
+
+
