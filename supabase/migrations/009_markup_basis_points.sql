@@ -48,6 +48,7 @@ DO $$
 DECLARE
   v_count INTEGER;
   v_total_orgs INTEGER;
+  r RECORD;
 BEGIN
   -- Check column was added
   SELECT COUNT(*) INTO v_count
@@ -86,3 +87,5 @@ BEGIN
   END LOOP;
 END;
 $$;
+
+

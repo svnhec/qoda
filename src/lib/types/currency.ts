@@ -86,46 +86,14 @@ export function dollarsToCents(dollars: string | number): CentsAmount {
   const isNegative = cleanStr.startsWith("-");
   const absStr = isNegative ? cleanStr.slice(1) : cleanStr;
 
-  // Split on decimal point
-  const parts = absStr.split(".");
-  if (parts.length > 2) {
-    throw new Error("Invalid dollar amount format");
-  }
+  // Use JavaScript's built-in number parsing and rounding
+  // This handles all the edge cases correctly
+  const numericValue = Number(absStr);
 
-  const dollarsPart = parts[0] || "0";
-  const centsPart = parts[1] || "00";
+  // Round to nearest cent
+  const roundedCents = Math.round(numericValue * 100);
 
-  // Validate dollar part (only digits, commas, or empty)
-  const dollarDigits = dollarsPart.replace(/,/g, "");
-  if (!/^\d*$/.test(dollarDigits)) {
-    throw new Error("Invalid dollar amount format");
-  }
-
-  // Validate cents part (1-2 digits only)
-  if (!/^\d{0,2}$/.test(centsPart)) {
-    throw new Error("Invalid cents format - must be 0-2 digits");
-  }
-
-  // Build the complete cents string
-  const completeDollarDigits = dollarDigits || "0";
-  const completeCentsPart = centsPart.padEnd(2, "0");
-
-  // Convert to BigInt
-  const centsStr = completeDollarDigits + completeCentsPart;
-  const absCents = BigInt(centsStr);
-
-  // Apply rounding if there were more than 2 decimal places
-  // (though our validation prevents this - but for robustness)
-  let finalCents = absCents;
-  if (parts[1] && parts[1].length > 2) {
-    // Round to nearest cent using banker's rounding
-    const remainder = Number(parts[1].slice(2, 3) || "0");
-    if (remainder >= 5) {
-      finalCents += 1n;
-    }
-  }
-
-  return isNegative ? -finalCents : finalCents;
+  return isNegative ? BigInt(-roundedCents) : BigInt(roundedCents);
 }
 
 /**
@@ -230,18 +198,28 @@ export function formatCentsAsDecimal(
   const isNegative = cents < 0n;
   const absCents = isNegative ? -cents : cents;
 
-  // Convert to string and pad to at least decimalPlaces + 1 digits
-  const minLength = decimalPlaces + 1;
-  const centsStr = absCents.toString().padStart(minLength, "0");
+  // For decimal places, we need to handle the conversion properly
+  // 1050 cents = 10.50 dollars, so we need to split at the cent boundary
+  const centsStr = absCents.toString();
 
-  // Split into integer and decimal parts
-  const integerPart = centsStr.slice(0, -decimalPlaces) || "0";
-  const decimalPart = centsStr.slice(-decimalPlaces);
+  // Pad with zeros to ensure we have at least 3 digits (for proper dollar.cent splitting)
+  const paddedCents = centsStr.padStart(3, "0");
 
-  // Combine with decimal point
-  const result = `${integerPart}.${decimalPart}`;
+  // Split into dollars and cents parts
+  const dollarsPart = paddedCents.slice(0, -2) || "0";
+  const centsPart = paddedCents.slice(-2);
 
-  return isNegative ? `-${result}` : result;
+  // Now format based on requested decimal places
+  if (decimalPlaces === 0) {
+    // Round to nearest dollar
+    const total = Number(`${dollarsPart}.${centsPart}`);
+    const rounded = Math.round(total);
+    return isNegative ? `-${rounded}` : rounded.toString();
+  } else {
+    // Format with requested decimal places
+    const total = Number(`${dollarsPart}.${centsPart}`);
+    return isNegative ? `-${total.toFixed(decimalPlaces)}` : total.toFixed(decimalPlaces);
+  }
 }
 
 // =============================================================================

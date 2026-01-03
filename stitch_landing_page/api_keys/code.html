@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>API Keys - FinObserve</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1349ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101522",
+                        "surface-dark": "#111522",
+                        "surface-darker": "#0b0d14",
+                        "border-dark": "#232c48",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+<div class="flex h-screen w-full flex-col">
+<!-- Top Navigation -->
+<header class="flex h-16 shrink-0 items-center justify-between border-b border-border-dark bg-surface-dark px-6 z-20">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-white">
+<div class="size-6 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M47.2426 24L24 47.2426L0.757355 24L24 0.757355L47.2426 24ZM12.2426 21H35.7574L24 9.24264L12.2426 21Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold tracking-tight text-white">FinObserve</h2>
+</div>
+<div class="relative hidden w-64 md:block">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+<span class="material-symbols-outlined !text-[20px]">search</span>
+</span>
+<input class="h-9 w-full rounded-lg border-none bg-[#232c48] pl-10 pr-4 text-sm text-white placeholder-slate-400 focus:ring-2 focus:ring-primary" placeholder="Search resources..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-sm font-medium text-slate-300 hover:text-white transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-medium text-slate-300 hover:text-white transition-colors" href="#">Logs</a>
+<a class="text-sm font-medium text-slate-300 hover:text-white transition-colors" href="#">Metrics</a>
+</nav>
+<div class="h-6 w-px bg-border-dark"></div>
+<div class="flex items-center gap-4">
+<button class="text-slate-300 hover:text-white">
+<span class="material-symbols-outlined !text-[24px]">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-cover bg-center ring-2 ring-border-dark" data-alt="User avatar with gradient background" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4b6N1BcEuIIrG9PNsl72wvCWicqdQquwYd1PGv6i26fiEjW1IiERTzEZceeV6hoxsA4FlB0K_HD9XivN3JeD3_XhbpMTB9h11g42aBmQLNfjkKHV3ANZr-oZVslJai6QXqkaO7mXji-wSxJwP94N9q9qJXViiXLNblAd93Si4a8KCm2mvT2pUV5O2wPz-Tx5xhLk979gHpdyzmEGDrv6chMb8Vvcku09-LFNB6B6htoV99Yo7b-a1TAE64sx4LSJ9xy4nq2CA0pEJ");'></div>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Sidebar -->
+<aside class="hidden w-64 flex-col border-r border-border-dark bg-surface-dark md:flex">
+<div class="flex flex-col gap-1 p-4">
+<div class="mb-6 flex items-center gap-3 rounded-lg border border-border-dark bg-surface-darker p-3">
+<div class="h-10 w-10 rounded bg-primary/20 flex items-center justify-center text-primary font-bold text-lg">A</div>
+<div class="flex flex-col overflow-hidden">
+<h3 class="truncate text-sm font-semibold text-white">Acme Financial</h3>
+<p class="truncate text-xs text-slate-400">Enterprise Plan</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-slate-400 !text-[16px]">expand_more</span>
+</div>
+<div class="space-y-1">
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-[#232c48] hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined !text-[20px]">home</span>
+                            Overview
+                        </a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-[#232c48] hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined !text-[20px]">credit_card</span>
+                            Transactions
+                        </a>
+<div class="my-2 h-px bg-border-dark mx-3"></div>
+<p class="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Developers</p>
+<a class="flex items-center gap-3 rounded-lg bg-primary/10 px-3 py-2 text-sm font-medium text-primary shadow-[inset_3px_0_0_0_#1349ec]" href="#">
+<span class="material-symbols-outlined !text-[20px] fill-current">key</span>
+                            API Keys
+                        </a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-[#232c48] hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined !text-[20px]">webhook</span>
+                            Webhooks
+                        </a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-[#232c48] hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined !text-[20px]">description</span>
+                            Documentation
+                        </a>
+<div class="my-2 h-px bg-border-dark mx-3"></div>
+<p class="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Settings</p>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-[#232c48] hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined !text-[20px]">group</span>
+                            Team Members
+                        </a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-[#232c48] hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined !text-[20px]">settings</span>
+                            General
+                        </a>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto bg-surface-darker p-6 lg:p-10">
+<div class="mx-auto max-w-6xl space-y-8">
+<!-- Page Heading -->
+<div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+<div class="space-y-1">
+<h1 class="text-3xl font-bold tracking-tight text-white">API Keys</h1>
+<p class="text-base text-slate-400 max-w-2xl">Manage secret keys to access the FinObserve financial data API. Treat these keys like passwords.</p>
+</div>
+<button class="group relative flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white transition-all hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0b0d14]">
+<span class="material-symbols-outlined !text-[20px]">add</span>
+<span>Generate New Key</span>
+</button>
+</div>
+<!-- Alert Banner -->
+<div class="flex items-start gap-4 rounded-lg border border-blue-900/50 bg-blue-900/10 p-4">
+<span class="material-symbols-outlined text-blue-400 mt-0.5">info</span>
+<div>
+<h4 class="text-sm font-medium text-blue-100">Security Recommendation</h4>
+<p class="mt-1 text-sm text-blue-300/80">We recommend rotating your API keys every 90 days. Your oldest key "Analytics Service" is 120 days old.</p>
+</div>
+</div>
+<!-- Table Section -->
+<div class="rounded-xl border border-border-dark bg-surface-dark overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead>
+<tr class="border-b border-border-dark bg-[#192033]/50">
+<th class="whitespace-nowrap px-6 py-4 font-semibold text-slate-300">Name</th>
+<th class="whitespace-nowrap px-6 py-4 font-semibold text-slate-300">Token</th>
+<th class="whitespace-nowrap px-6 py-4 font-semibold text-slate-300">Created</th>
+<th class="whitespace-nowrap px-6 py-4 font-semibold text-slate-300">Last Used</th>
+<th class="whitespace-nowrap px-6 py-4 text-right font-semibold text-slate-300">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-dark">
+<!-- Row 1 -->
+<tr class="group hover:bg-[#1a2136] transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-primary">
+<span class="material-symbols-outlined !text-[18px]">terminal</span>
+</div>
+<div>
+<p class="font-medium text-white">Production Server 1</p>
+<p class="text-xs text-slate-500">Read/Write Access</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 font-mono text-slate-400 bg-surface-darker px-2 py-1.5 rounded border border-border-dark w-fit">
+<span class="text-primary">sk_live_</span>
+<span class="tracking-widest">•••••••••••••</span>
+<span>W8zP</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-400">Oct 24, 2023</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="h-2 w-2 rounded-full bg-emerald-500"></div>
+<span class="text-white">2 mins ago</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-100 sm:opacity-60 sm:group-hover:opacity-100 transition-opacity">
+<button class="flex h-8 w-8 items-center justify-center rounded hover:bg-surface-darker hover:text-white text-slate-400 transition-colors" title="Reveal Key">
+<span class="material-symbols-outlined !text-[18px]">visibility</span>
+</button>
+<button class="flex h-8 w-8 items-center justify-center rounded hover:bg-surface-darker hover:text-white text-slate-400 transition-colors" title="Copy Key">
+<span class="material-symbols-outlined !text-[18px]">content_copy</span>
+</button>
+<div class="mx-1 h-4 w-px bg-border-dark"></div>
+<button class="flex h-8 px-2 items-center justify-center rounded hover:bg-red-500/10 hover:text-red-400 text-red-500/80 text-xs font-semibold uppercase tracking-wide transition-colors" title="Revoke Key">
+                                                    Revoke
+                                                </button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-[#1a2136] transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="flex h-8 w-8 items-center justify-center rounded bg-purple-500/10 text-purple-400">
+<span class="material-symbols-outlined !text-[18px]">science</span>
+</div>
+<div>
+<p class="font-medium text-white">Staging Environment</p>
+<p class="text-xs text-slate-500">Read Only</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 font-mono text-slate-400 bg-surface-darker px-2 py-1.5 rounded border border-border-dark w-fit">
+<span class="text-purple-400">sk_test_</span>
+<span class="tracking-widest">•••••••••••••</span>
+<span>aJ92</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-400">Sep 12, 2023</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="h-2 w-2 rounded-full bg-slate-600"></div>
+<span class="text-slate-400">1 day ago</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-100 sm:opacity-60 sm:group-hover:opacity-100 transition-opacity">
+<button class="flex h-8 w-8 items-center justify-center rounded hover:bg-surface-darker hover:text-white text-slate-400 transition-colors" title="Reveal Key">
+<span class="material-symbols-outlined !text-[18px]">visibility</span>
+</button>
+<button class="flex h-8 w-8 items-center justify-center rounded hover:bg-surface-darker hover:text-white text-slate-400 transition-colors" title="Copy Key">
+<span class="material-symbols-outlined !text-[18px]">content_copy</span>
+</button>
+<div class="mx-1 h-4 w-px bg-border-dark"></div>
+<button class="flex h-8 px-2 items-center justify-center rounded hover:bg-red-500/10 hover:text-red-400 text-red-500/80 text-xs font-semibold uppercase tracking-wide transition-colors" title="Revoke Key">
+                                                    Revoke
+                                                </button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-[#1a2136] transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="flex h-8 w-8 items-center justify-center rounded bg-orange-500/10 text-orange-400">
+<span class="material-symbols-outlined !text-[18px]">analytics</span>
+</div>
+<div>
+<p class="font-medium text-white">Analytics Service</p>
+<p class="text-xs text-slate-500">Write Only</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 font-mono text-slate-400 bg-surface-darker px-2 py-1.5 rounded border border-border-dark w-fit">
+<span class="text-primary">sk_live_</span>
+<span class="tracking-widest">•••••••••••••</span>
+<span>P4xL</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-400">Aug 05, 2023</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="h-2 w-2 rounded-full bg-slate-600"></div>
+<span class="text-slate-400">Never</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-100 sm:opacity-60 sm:group-hover:opacity-100 transition-opacity">
+<button class="flex h-8 w-8 items-center justify-center rounded hover:bg-surface-darker hover:text-white text-slate-400 transition-colors" title="Reveal Key">
+<span class="material-symbols-outlined !text-[18px]">visibility</span>
+</button>
+<button class="flex h-8 w-8 items-center justify-center rounded hover:bg-surface-darker hover:text-white text-slate-400 transition-colors" title="Copy Key">
+<span class="material-symbols-outlined !text-[18px]">content_copy</span>
+</button>
+<div class="mx-1 h-4 w-px bg-border-dark"></div>
+<button class="flex h-8 px-2 items-center justify-center rounded hover:bg-red-500/10 hover:text-red-400 text-red-500/80 text-xs font-semibold uppercase tracking-wide transition-colors" title="Revoke Key">
+                                                    Revoke
+                                                </button>
+</div>
+</td>
+</tr>
+<!-- Row 4 (Revoked Example) -->
+<tr class="group hover:bg-[#1a2136] transition-colors opacity-60 hover:opacity-100">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="flex h-8 w-8 items-center justify-center rounded bg-slate-700/30 text-slate-500">
+<span class="material-symbols-outlined !text-[18px]">block</span>
+</div>
+<div>
+<p class="font-medium text-slate-400 line-through decoration-slate-600">Old Laptop Key</p>
+<p class="text-xs text-slate-600">Revoked</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 font-mono text-slate-600 bg-surface-darker px-2 py-1.5 rounded border border-border-dark w-fit">
+<span class="opacity-50">sk_test_</span>
+<span class="tracking-widest">•••••••••••••</span>
+<span class="opacity-50">vB91</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-600">Jan 10, 2023</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="text-slate-600">Revoked on Mar 01</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-1">
+<span class="text-xs text-slate-600 font-medium italic pr-2">Cannot be restored</span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Usage Log Summary -->
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+<div class="rounded-xl border border-border-dark bg-surface-dark p-6">
+<h3 class="mb-4 text-base font-semibold text-white">Recent Activity</h3>
+<div class="space-y-4">
+<div class="flex items-start gap-3">
+<div class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></div>
+<div>
+<p class="text-sm font-medium text-slate-200">Key created "Production Server 2"</p>
+<p class="text-xs text-slate-500">by john.doe@acme.com • 2 hours ago</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="mt-1 h-2 w-2 rounded-full bg-red-500"></div>
+<div>
+<p class="text-sm font-medium text-slate-200">Key revoked "Old Laptop Key"</p>
+<p class="text-xs text-slate-500">by system_admin • 2 weeks ago</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="mt-1 h-2 w-2 rounded-full bg-blue-500"></div>
+<div>
+<p class="text-sm font-medium text-slate-200">Key rolled over "Staging Environment"</p>
+<p class="text-xs text-slate-500">by ci_cd_bot • 1 month ago</p>
+</div>
+</div>
+</div>
+</div>
+<div class="rounded-xl border border-border-dark bg-surface-dark p-6">
+<h3 class="mb-4 text-base font-semibold text-white">API Rate Limits</h3>
+<div class="space-y-4">
+<div class="space-y-2">
+<div class="flex justify-between text-sm">
+<span class="text-slate-400">Production (Live)</span>
+<span class="text-white">850 / 1000 req/min</span>
+</div>
+<div class="h-2 w-full overflow-hidden rounded-full bg-surface-darker">
+<div class="h-full rounded-full bg-primary w-[85%]"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-sm">
+<span class="text-slate-400">Staging (Test)</span>
+<span class="text-white">120 / 500 req/min</span>
+</div>
+<div class="h-2 w-full overflow-hidden rounded-full bg-surface-darker">
+<div class="h-full rounded-full bg-purple-500 w-[24%]"></div>
+</div>
+</div>
+</div>
+<div class="mt-6">
+<a class="text-sm font-medium text-primary hover:text-blue-400 flex items-center gap-1" href="#">
+                                    View detailed metrics
+                                    <span class="material-symbols-outlined !text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

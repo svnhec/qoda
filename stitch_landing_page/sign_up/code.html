@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sign Up - Financial Observability</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#1349ec",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101522",
+              "card-dark": "#161b22",
+              "border-dark": "#2a3140",
+              "input-border": "#343b4d"
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom scrollbar for engineered feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #101522; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a3140; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #343b4d; 
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4 selection:bg-primary/30 selection:text-white text-slate-900 dark:text-white">
+<!-- Layout Container -->
+<div class="w-full max-w-[440px] flex flex-col items-center animate-fade-in">
+<!-- Header / Logo -->
+<div class="mb-8 flex flex-col items-center gap-3">
+<div class="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-3xl">query_stats</span>
+</div>
+<div class="flex flex-col items-center">
+<h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">FinObserve</h2>
+<span class="text-xs text-slate-500 dark:text-slate-500 uppercase tracking-widest font-semibold">Enterprise Platform</span>
+</div>
+</div>
+<!-- Authentication Card -->
+<div class="w-full bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-border-dark shadow-xl overflow-hidden p-8 flex flex-col gap-6 relative">
+<!-- Headline -->
+<div class="text-center space-y-2">
+<h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">Create your account</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal">Start monitoring your financial data today.</p>
+</div>
+<!-- Social Auth: Google Button -->
+<!-- Using white bg as requested -->
+<button class="group w-full flex items-center justify-center gap-3 bg-white text-slate-900 border border-slate-300 rounded-lg h-11 hover:bg-slate-50 hover:border-slate-400 transition-all shadow-sm">
+<img class="w-5 h-5" data-alt="Google Logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbE01VG-iOXt9wL9KBHYrii44NY5MAu0RI0F2XS8_RrxZfbmaRtTyhjLWSktvLwwePUJDvAGG1Upqbp7297P3MlAp_X6-KR-19sqOFdGuSUXbLuBPKtD0gM8D5JRVzdu2q64gu6qInqmL75xJrKzuWJ6HJ6Ea1rlwztMVcmgkUMTtc7AOS4v6kSIFg1YwDZf0Pu_uFgOODs-UXEFpQRR5OYVOp5QmCFRhAfK96NTPw0HVk7uK6s8WmGwO1VipRHY8LmroaTOlavJ7r"/>
+<span class="font-semibold text-sm tracking-wide">Continue with Google</span>
+</button>
+<!-- Divider -->
+<div class="relative flex py-1 items-center">
+<div class="flex-grow border-t border-slate-200 dark:border-border-dark"></div>
+<span class="flex-shrink-0 mx-4 text-slate-400 dark:text-slate-500 text-[10px] font-bold tracking-[0.15em] uppercase">— Or Register With Email —</span>
+<div class="flex-grow border-t border-slate-200 dark:border-border-dark"></div>
+</div>
+<!-- Signup Form -->
+<form class="flex flex-col gap-5" onsubmit="event.preventDefault();">
+<!-- Full Name -->
+<div class="space-y-1.5 group">
+<label class="block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 group-focus-within:text-primary transition-colors" for="fullname">Full Name</label>
+<div class="relative">
+<input class="block w-full bg-slate-50 dark:bg-[#0f1218] border border-slate-200 dark:border-input-border rounded-lg h-10 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder-slate-400 transition-all font-medium" id="fullname" placeholder="Jane Doe" type="text"/>
+</div>
+</div>
+<!-- Email -->
+<div class="space-y-1.5 group">
+<label class="block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 group-focus-within:text-primary transition-colors" for="email">Work Email</label>
+<div class="relative">
+<input class="block w-full bg-slate-50 dark:bg-[#0f1218] border border-slate-200 dark:border-input-border rounded-lg h-10 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder-slate-400 transition-all font-medium" id="email" placeholder="name@company.com" type="email"/>
+</div>
+</div>
+<!-- Password -->
+<div class="space-y-1.5 group">
+<div class="flex justify-between items-center">
+<label class="block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 group-focus-within:text-primary transition-colors" for="password">Password</label>
+</div>
+<div class="relative">
+<input class="block w-full bg-slate-50 dark:bg-[#0f1218] border border-slate-200 dark:border-input-border rounded-lg h-10 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder-slate-400 transition-all font-medium pr-10" id="password" placeholder="Min. 8 characters" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors cursor-pointer p-1" type="button">
+<span class="material-symbols-outlined text-[20px] leading-none">visibility</span>
+</button>
+</div>
+<!-- Inline validation placeholder -->
+<!-- <p class="hidden text-xs text-red-500 mt-1">Password must be at least 8 characters</p> -->
+</div>
+<!-- Submit Button -->
+<button class="mt-2 w-full bg-primary hover:bg-blue-600 text-white font-bold rounded-lg h-11 transition-all shadow-lg shadow-primary/25 active:scale-[0.98] flex items-center justify-center gap-2" type="submit">
+<span>Sign Up</span>
+<span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+</form>
+<!-- Footer -->
+<div class="text-center">
+<p class="text-sm text-slate-500 dark:text-slate-400">
+                    Already have an account? 
+                    <a class="text-primary hover:text-blue-400 font-semibold transition-colors decoration-2 hover:underline underline-offset-2" href="#">Log in</a>
+</p>
+</div>
+</div>
+<!-- Legal Links -->
+<div class="mt-8 flex gap-6 text-xs text-slate-400 dark:text-slate-600 font-medium">
+<a class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors" href="#">Terms of Service</a>
+<span class="text-slate-300 dark:text-slate-700">•</span>
+<a class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors" href="#">Privacy Policy</a>
+<span class="text-slate-300 dark:text-slate-700">•</span>
+<a class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors" href="#">Help</a>
+</div>
+</div>
+</body></html>

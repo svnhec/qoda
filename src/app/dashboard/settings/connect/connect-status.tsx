@@ -5,6 +5,7 @@
  * =============================================================================
  * Client component for Stripe Connect onboarding UI.
  * Handles button clicks and redirects to Stripe.
+ * Renders BankingDashboard if verified.
  * =============================================================================
  */
 
@@ -12,15 +13,16 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { 
-  CheckCircle2, 
-  AlertTriangle, 
-  ExternalLink, 
+import {
+  CheckCircle2,
+  AlertTriangle,
+  ExternalLink,
   Loader2,
   CreditCard,
   Building2,
   ShieldCheck
 } from "lucide-react";
+import { BankingInterface } from "@/components/dashboard/banking-interface";
 
 interface ConnectStatusProps {
   organizationId: string;
@@ -61,6 +63,11 @@ export function ConnectStatus({
   const isVerified = !!stripeAccountVerifiedAt;
   const hasRequirements = stripeAccountRequirementsDue.length > 0;
   const hasStartedOnboarding = !!stripeAccountId;
+
+  // Render Banking Interface if Verified
+  if (isVerified && stripeAccountId) {
+    return <BankingInterface stripeAccountId={stripeAccountId} />;
+  }
 
   async function handleConnectClick() {
     setIsLoading(true);
@@ -155,16 +162,12 @@ export function ConnectStatus({
             )}
             <div>
               <CardTitle className="text-xl">
-                {isVerified
-                  ? "Account Verified"
-                  : hasStartedOnboarding
+                {hasStartedOnboarding
                   ? "Verification In Progress"
                   : "Complete Your Bank Setup"}
               </CardTitle>
               <CardDescription>
-                {isVerified
-                  ? "Your account is ready to issue virtual cards"
-                  : hasStartedOnboarding
+                {hasStartedOnboarding
                   ? "Complete the remaining requirements to activate your account"
                   : "Connect to Stripe to enable virtual card issuing"}
               </CardDescription>
@@ -173,28 +176,8 @@ export function ConnectStatus({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Verified State */}
-          {isVerified && (
-            <div className="flex items-center gap-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <CheckCircle2 className="w-8 h-8 text-primary flex-shrink-0" />
-              <div>
-                <p className="font-medium text-foreground">
-                  Your account is verified and ready to issue cards
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Verified on{" "}
-                  {new Date(stripeAccountVerifiedAt!).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Requirements Due */}
-          {hasRequirements && !isVerified && (
+          {hasRequirements && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-foreground">
                 Outstanding Requirements ({stripeAccountRequirementsDue.length})
@@ -214,30 +197,28 @@ export function ConnectStatus({
           )}
 
           {/* Features List (for non-verified) */}
-          {!isVerified && (
-            <div className="grid gap-3">
-              <p className="text-sm font-medium text-foreground">
-                What you&apos;ll get:
-              </p>
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CreditCard className="w-4 h-4 text-primary" />
-                  Issue virtual cards for your AI agents
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="w-4 h-4 text-primary" />
-                  Real-time spend tracking and attribution
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Building2 className="w-4 h-4 text-primary" />
-                  Automated rebilling to your clients
-                </div>
+          <div className="grid gap-3">
+            <p className="text-sm font-medium text-foreground">
+              What you&apos;ll get:
+            </p>
+            <div className="grid gap-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CreditCard className="w-4 h-4 text-primary" />
+                Issue virtual cards for your AI agents
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                Real-time spend tracking and attribution
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Building2 className="w-4 h-4 text-primary" />
+                Automated rebilling to your clients
               </div>
             </div>
-          )}
+          </div>
 
           {/* Action Button */}
-          {isOwner && !isVerified && (
+          {isOwner && (
             <Button
               onClick={handleConnectClick}
               disabled={isLoading}
@@ -263,35 +244,8 @@ export function ConnectStatus({
             </Button>
           )}
 
-          {/* View Dashboard Button (verified) */}
-          {isVerified && stripeAccountId && (
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() =>
-                  window.open(
-                    `https://dashboard.stripe.com/${stripeAccountId}`,
-                    "_blank"
-                  )
-                }
-              >
-                View Stripe Dashboard
-                <ExternalLink className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="default"
-                className="flex-1"
-                onClick={() => (window.location.href = "/dashboard/agents")}
-              >
-                Create Your First Agent
-                <CreditCard className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-
           {/* Non-owner message */}
-          {!isOwner && !isVerified && (
+          {!isOwner && (
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Owner Required</AlertTitle>
@@ -320,4 +274,3 @@ export function ConnectStatus({
     </div>
   );
 }
-

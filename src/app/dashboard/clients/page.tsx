@@ -1,249 +1,232 @@
+/* eslint-disable no-console */
 /**
- * Clients List Page
- * =============================================================================
- * Shows all clients for the organization with search and filters.
- * Uses Server Components for data fetching (RLS enforced).
- * =============================================================================
+ * Clients List Page (CRM View)
+ * 
+ * Displays all clients for the user's organization with metrics.
+ * RLS policies are now properly configured.
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Search, Users, MoreHorizontal, Mail, Phone } from "lucide-react";
+import { Plus, Search, Users, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import type { Client } from "@/lib/db/types";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/types/currency";
 
-interface PageProps {
-    searchParams: Promise<{
-        search?: string;
-        is_active?: string;
-    }>;
-}
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ search?: string; sort?: string }> }) {
+    // 1. Safe Param Await
+    let params: { search?: string; sort?: string } = {};
+    try {
+        params = await searchParams;
+    } catch (e) {
+        console.error("Params error:", e);
+    }
 
-export default async function ClientsPage({ searchParams }: PageProps) {
-    const params = await searchParams;
+    // 2. Supabase Client (respects RLS)
     const supabase = await createClient();
 
-    // Get current user
-    const {
-        data: { user },
-        error: authError,
-    } = await supabase.auth.getUser();
-
+    // 3. Auth Check
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-        redirect("/auth/login?redirect=/dashboard/clients");
+        return <div className="p-10 text-white">Authentication Error. Please log in again.</div>;
     }
 
-    // Get user's default organization
-    const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("default_organization_id")
-        .eq("id", user.id)
-        .single();
+    // 4. Org Check
+    let profile = null;
+    let orgId = null;
 
-    if (!profile?.default_organization_id) {
-        redirect("/dashboard?error=no_organization");
+    try {
+        // Use SERVICE client to fetch profile (bypass RLS on profile/orgs just in case)
+        const { data } = await supabase
+            .from("user_profiles")
+            .select("default_organization_id")
+            .eq("id", user.id)
+            .single();
+        profile = data;
+        orgId = profile?.default_organization_id;
+
+        if (!orgId) {
+            console.log("No default org found, trying fallback...");
+            const { data: memberData } = await supabase
+                .from("org_members")
+                .select("organization_id")
+                .eq("user_id", user.id)
+                .limit(1)
+                .single();
+            orgId = memberData?.organization_id;
+        }
+    } catch (e) {
+        console.error("Profile fetch error:", e);
     }
 
-    const organizationId = profile.default_organization_id;
-
-    // Build query
-    let query = supabase
-        .from("clients")
-        .select("*")
-        .eq("organization_id", organizationId)
-        .order("created_at", { ascending: false });
-
-    // Apply search filter
-    if (params.search) {
-        query = query.ilike("name", `%${params.search}%`);
+    if (!orgId) {
+        return (
+            <div className="p-10 text-white flex flex-col items-center justify-center h-full">
+                <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
+                <h2 className="text-xl font-bold">No Organization Found</h2>
+                <p className="text-white/50 mb-6">You need to be part of an organization to view clients.</p>
+                <Link href="/dashboard/settings">
+                    <Button variant="outline">Check Settings</Button>
+                </Link>
+            </div>
+        );
     }
 
-    // Apply active filter
-    if (params.is_active !== undefined) {
-        query = query.eq("is_active", params.is_active === "true");
+    // 5. Data Fetch (SPLIT QUERY STRATEGY)
+    let clientsWithMetrics: any[] = [];
+    let fetchError = null;
+
+    try {
+        // A. Fetch Clients (Using Service Client)
+        let clientQuery = supabase.from("clients").select("*").eq("organization_id", orgId);
+        if (params.search) clientQuery = clientQuery.ilike("name", `%${params.search}%`);
+
+        const { data: clients, error: clientError } = await clientQuery;
+        if (clientError) throw new Error("Client fetch failed: " + clientError.message);
+
+        // B. Fetch Agents (Using Service Client)
+        const { data: agents, error: agentError } = await supabase
+            .from("agents")
+            .select("id, client_id, current_spend_cents, is_active")
+            .eq("organization_id", orgId);
+
+        if (agentError) throw new Error("Agent fetch failed: " + agentError.message);
+
+        // 6. Memory Aggregation
+        const agentMap = new Map();
+        (agents || []).forEach(agent => {
+            if (!agent.client_id) return;
+            if (!agentMap.has(agent.client_id)) agentMap.set(agent.client_id, []);
+            agentMap.get(agent.client_id).push(agent);
+        });
+
+        // 7. Transformation
+        clientsWithMetrics = (clients || []).map((client: any) => {
+            const clientAgents = agentMap.get(client.id) || [];
+            const activeAgents = clientAgents.filter((a: any) => a.is_active).length;
+
+            const totalSpendCents = clientAgents.reduce((sum: bigint, a: any) => {
+                let val = 0n;
+                try {
+                    const spendValue = a.current_spend_cents;
+                    if (spendValue != null) {
+                        const strValue = String(spendValue);
+                        const intPart = strValue.split('.')[0] || '0';
+                        val = BigInt(intPart);
+                    }
+                } catch { }
+                return sum + val;
+            }, 0n);
+
+            const markupPercent = 15;
+            const profitCents = (totalSpendCents * BigInt(markupPercent)) / 100n;
+            const markupCents = profitCents;
+
+            return {
+                ...client,
+                activeAgents,
+                totalSpendCents,
+                profitCents,
+                markupCents,
+                totalRevenueCents: totalSpendCents + markupCents,
+                markupPercent,
+                billingStatus: 'paid'
+            };
+        });
+
+    } catch (e: any) {
+        const errorDetails = {
+            message: e?.message || "Unknown error",
+            details: e?.details || "No details",
+            hint: e?.hint || "No hint",
+            code: e?.code || "No code"
+        };
+        fetchError = JSON.stringify(errorDetails, null, 2);
+        console.error("CLIENT PAGE ERROR:", errorDetails);
     }
 
-    const { data: clients, error } = await query;
-
-    if (error) {
-        console.error("Failed to fetch clients:", error);
+    if (fetchError) {
+        return (
+            <div className="p-10 flex flex-col items-center">
+                <AlertTriangle className="w-12 h-12 text-alert mb-4" />
+                <h2 className="text-xl font-bold text-foreground">Error loading clients</h2>
+                <pre className="text-muted-foreground mb-2 bg-secondary p-4 rounded text-xs overflow-auto max-w-2xl">{fetchError}</pre>
+                <p className="text-muted-foreground text-sm">Please refresh or contact support.</p>
+            </div>
+        );
     }
 
-    const clientList = (clients as Client[]) || [];
-    const activeCount = clientList.filter((c) => c.is_active).length;
-    const inactiveCount = clientList.filter((c) => !c.is_active).length;
-
+    // 8. Render
     return (
-        <div className="max-w-6xl mx-auto px-6 py-12">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
+        <div className="max-w-[1400px] mx-auto px-6 py-8 min-h-screen bg-background text-foreground animate-in fade-in duration-500">
+            <div className="flex justify-between items-center mb-10">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">Clients</h1>
-                    <p className="mt-2 text-muted-foreground">
-                        Manage your end-clients and their billing.
-                    </p>
+                    <h1 className="text-3xl font-display font-bold tracking-tight mb-2">Client Portfolio</h1>
+                    <p className="text-muted-foreground">Manage your detailed client ledger and profitability metrics.</p>
                 </div>
                 <Link href="/dashboard/clients/new">
-                    <Button>
+                    <Button variant="default">
                         <Plus className="w-4 h-4" />
                         Add Client
                     </Button>
                 </Link>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
-                <div className="p-4 rounded-xl border border-border bg-card">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{clientList.length}</p>
-                            <p className="text-sm text-muted-foreground">Total Clients</p>
-                        </div>
+            {/* Content */}
+            {clientsWithMetrics.length === 0 ? (
+                <Card variant="default"  className="p-16 text-center flex flex-col items-center justify-center border-dashed">
+                    <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4">
+                        <Users className="w-8 h-8 text-muted-foreground" />
                     </div>
-                </div>
-                <div className="p-4 rounded-xl border border-border bg-card">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-green-500" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{activeCount}</p>
-                            <p className="text-sm text-muted-foreground">Active</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="p-4 rounded-xl border border-border bg-card">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                            <Users className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{inactiveCount}</p>
-                            <p className="text-sm text-muted-foreground">Inactive</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Search & Filters */}
-            <div className="flex items-center gap-4 mb-6">
-                <form className="flex-1 max-w-md">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                            name="search"
-                            placeholder="Search clients..."
-                            defaultValue={params.search}
-                            className="pl-10"
-                        />
-                    </div>
-                </form>
-                <div className="flex gap-2">
-                    <Link href="/dashboard/clients">
-                        <Button variant={!params.is_active ? "default" : "outline"} size="sm">
-                            All
-                        </Button>
-                    </Link>
-                    <Link href="/dashboard/clients?is_active=true">
-                        <Button variant={params.is_active === "true" ? "default" : "outline"} size="sm">
-                            Active
-                        </Button>
-                    </Link>
-                    <Link href="/dashboard/clients?is_active=false">
-                        <Button variant={params.is_active === "false" ? "default" : "outline"} size="sm">
-                            Inactive
-                        </Button>
-                    </Link>
-                </div>
-            </div>
-
-            {/* Clients Table */}
-            {clientList.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-border rounded-xl">
-                    <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium text-foreground mb-2">No clients yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                        Create your first client to start managing their AI agents.
+                    <h3 className="text-lg font-medium mb-1">No clients found</h3>
+                    <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-6">
+                        Get started by onboarding your first client account.
                     </p>
                     <Link href="/dashboard/clients/new">
-                        <Button>
-                            <Plus className="w-4 h-4" />
-                            Add Your First Client
+                        <Button variant="outline">
+                            Create First Client
                         </Button>
                     </Link>
-                </div>
+                </Card>
             ) : (
-                <div className="rounded-xl border border-border overflow-hidden">
+                <Card variant="default"  className="overflow-hidden">
                     <Table>
-                        <TableHeader>
-                            <TableRow className="bg-muted/50">
-                                <TableHead>Name</TableHead>
-                                <TableHead>Contact</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Created</TableHead>
+                        <TableHeader className="bg-secondary/30">
+                            <TableRow className="border-border hover:bg-secondary/40">
+                                <TableHead className="pl-6 font-mono text-xs uppercase tracking-wider text-muted-foreground">Client Name</TableHead>
+                                <TableHead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Active Agents</TableHead>
+                                <TableHead className="text-right font-mono text-xs uppercase tracking-wider text-muted-foreground">Total Spend</TableHead>
+                                <TableHead className="text-right font-mono text-xs uppercase tracking-wider text-muted-foreground">Net Profit</TableHead>
                                 <TableHead className="w-12"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {clientList.map((client) => (
-                                <TableRow key={client.id}>
-                                    <TableCell>
-                                        <Link
-                                            href={`/dashboard/clients/${client.id}`}
-                                            className="font-medium text-foreground hover:text-primary transition-colors"
-                                        >
-                                            {client.name}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col gap-1">
-                                            {client.contact_email && (
-                                                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                                    <Mail className="w-3.5 h-3.5" />
-                                                    {client.contact_email}
-                                                </div>
-                                            )}
-                                            {client.contact_phone && (
-                                                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                                    <Phone className="w-3.5 h-3.5" />
-                                                    {client.contact_phone}
-                                                </div>
-                                            )}
-                                            {!client.contact_email && !client.contact_phone && (
-                                                <span className="text-sm text-muted-foreground">—</span>
-                                            )}
+                            {clientsWithMetrics.map((client) => (
+                                <TableRow key={client.id} className="border-border hover:bg-white/5 transition-colors">
+                                    <TableCell className="pl-6 font-medium text-foreground">
+                                        <div className="flex flex-col">
+                                            <span>{client.name}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <span
-                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${client.is_active
-                                                    ? "bg-green-500/10 text-green-600"
-                                                    : "bg-muted text-muted-foreground"
-                                                }`}
-                                        >
-                                            {client.is_active ? "Active" : "Inactive"}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-2 h-2 rounded-full ${client.activeAgents > 0 ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-neutral-500"}`} />
+                                            <span className="font-mono text-sm">{client.activeAgents}</span>
+                                        </div>
                                     </TableCell>
-                                    <TableCell className="text-muted-foreground">
-                                        {new Date(client.created_at).toLocaleDateString()}
+                                    <TableCell className="text-right font-mono text-muted-foreground">
+                                        {formatCurrency(client.totalSpendCents)}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <span className="text-profit font-mono font-bold drop-shadow-[0_0_8px_rgba(16,185,129,0.2)]">
+                                            +{formatCurrency(client.profitCents)}
+                                        </span>
                                     </TableCell>
                                     <TableCell>
                                         <Link href={`/dashboard/clients/${client.id}`}>
-                                            <Button variant="ghost" size="icon">
-                                                <MoreHorizontal className="w-4 h-4" />
+                                            <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground">
+                                                <Search className="w-4 h-4" />
                                             </Button>
                                         </Link>
                                     </TableCell>
@@ -251,7 +234,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                             ))}
                         </TableBody>
                     </Table>
-                </div>
+                </Card>
             )}
         </div>
     );

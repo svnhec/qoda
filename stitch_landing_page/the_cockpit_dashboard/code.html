@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Cockpit Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1349ec",
+                        "accent-emerald": "#0bda62",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101522",
+                        "surface-dark": "#181b21",
+                        "border-dark": "#2d3340",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for engineered feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111522;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d3340;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3e4658;
+        }
+        .engineered-grid {
+            background-image: linear-gradient(to right, #232c48 1px, transparent 1px),
+                              linear-gradient(to bottom, #232c48 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            opacity: 0.15;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-primary selection:text-white">
+<!-- Subtle Grid Background -->
+<div class="fixed inset-0 pointer-events-none engineered-grid z-0"></div>
+<!-- Main Layout Container -->
+<div class="relative z-10 flex flex-col h-full grow">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark bg-background-dark px-6 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4 text-white">
+<div class="size-6 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]">token</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">The Cockpit</h2>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<div class="hidden md:flex items-center gap-2 text-[#92a0c9] text-sm font-medium">
+<span class="material-symbols-outlined text-base">language</span>
+<span>Global-1</span>
+</div>
+<button class="flex items-center justify-center rounded-lg size-10 bg-surface-dark border border-border-dark text-white hover:bg-[#232c48] transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border border-border-dark" data-alt="User profile avatar gradient" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCmJlND1iknRqc9IPW_dmTAF4An6ssuNwB-T9xkK2v4p8WZB-jT1nOGC5KEfIy0YD08fsF26HfS291_FJWMOJ1mQa00EE60cRYc2vHq7rhI46Do3xuXyFfIETh3OO4yVbXICOiZ_SgT7J-y-Mx3CLkcBcDLhLKy2aBjTvndUHzWoCKSH3F4anpP5CMz6uo2dCPUerG7RPQXkPSwA1uwSFvZKhU5kJnu1B7_B3LHL2bd-GiU4JSnn_smx-WwrG8tWdB3CeK5OK4BpuYP");'></div>
+</div>
+</header>
+<!-- Main Content Wrapper -->
+<div class="flex flex-1 justify-center py-6 px-4 md:px-8">
+<div class="flex flex-col max-w-[1280px] w-full gap-6">
+<!-- Breadcrumbs & Heading Row -->
+<div class="flex flex-col gap-6">
+<!-- Breadcrumbs -->
+<div class="flex flex-wrap gap-2 items-center">
+<a class="text-[#92a0c9] text-sm font-medium hover:text-white transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+                            Dashboards
+                        </a>
+<span class="text-[#92a0c9] text-sm font-medium">/</span>
+<span class="text-white text-sm font-medium">Financial Observability</span>
+</div>
+<!-- Header & Controls -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-border-dark pb-6">
+<div class="flex flex-col gap-2">
+<h1 class="text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em] uppercase">Mission Control</h1>
+<p class="text-[#92a0c9] text-base font-normal">Real-time financial telemetry</p>
+</div>
+<div class="flex items-center gap-4">
+<!-- Time Filters -->
+<div class="flex h-10 items-center justify-center rounded-lg bg-surface-dark border border-border-dark p-1">
+<label class="flex cursor-pointer h-full items-center justify-center rounded px-3 has-[:checked]:bg-primary has-[:checked]:text-white text-[#92a0c9] text-xs font-bold transition-all">
+<span>24H</span>
+<input checked="" class="invisible w-0 absolute" name="time-filter" type="radio" value="24H"/>
+</label>
+<label class="flex cursor-pointer h-full items-center justify-center rounded px-3 has-[:checked]:bg-primary has-[:checked]:text-white text-[#92a0c9] text-xs font-bold transition-all">
+<span>7D</span>
+<input class="invisible w-0 absolute" name="time-filter" type="radio" value="7D"/>
+</label>
+<label class="flex cursor-pointer h-full items-center justify-center rounded px-3 has-[:checked]:bg-primary has-[:checked]:text-white text-[#92a0c9] text-xs font-bold transition-all">
+<span>30D</span>
+<input class="invisible w-0 absolute" name="time-filter" type="radio" value="30D"/>
+</label>
+</div>
+<button class="flex items-center gap-2 h-10 px-4 bg-primary hover:bg-blue-600 text-white text-sm font-bold rounded-lg transition-colors shadow-lg shadow-blue-900/20">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span class="hidden sm:inline">Export Report</span>
+</button>
+</div>
+</div>
+</div>
+<!-- KPI Cards Row -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- KPI 1: Active Agents -->
+<div class="bg-surface-dark border border-border-dark rounded-xl p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group hover:border-primary/50 transition-colors">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">smart_toy</span>
+</div>
+<div class="flex items-center gap-2 mb-2">
+<span class="size-2 rounded-full bg-accent-emerald animate-pulse"></span>
+<h3 class="text-[#92a0c9] text-xs font-bold uppercase tracking-widest">Active Agents</h3>
+</div>
+<div class="flex items-end justify-between">
+<span class="text-white text-4xl font-mono font-bold">12</span>
+<div class="flex items-center gap-1 text-accent-emerald text-sm font-bold bg-accent-emerald/10 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span>Online</span>
+</div>
+</div>
+<div class="w-full bg-[#232c48] h-1 mt-4 rounded-full overflow-hidden">
+<div class="bg-accent-emerald h-full w-[85%]"></div>
+</div>
+</div>
+<!-- KPI 2: Burn Rate -->
+<div class="bg-surface-dark border border-border-dark rounded-xl p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group hover:border-primary/50 transition-colors">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">local_fire_department</span>
+</div>
+<div class="flex items-center gap-2 mb-2">
+<h3 class="text-[#92a0c9] text-xs font-bold uppercase tracking-widest">Daily Burn Rate</h3>
+</div>
+<div class="flex items-end justify-between">
+<span class="text-white text-4xl font-mono font-bold">$4,200</span>
+<div class="flex items-center gap-1 text-orange-400 text-sm font-bold">
+<span class="material-symbols-outlined text-sm">arrow_outward</span>
+<span>5%</span>
+</div>
+</div>
+<p class="text-[#566286] text-xs mt-4">Vs. previous 24h period</p>
+</div>
+<!-- KPI 3: Net Profit -->
+<div class="bg-surface-dark border border-border-dark rounded-xl p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group hover:border-primary/50 transition-colors">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">trending_up</span>
+</div>
+<div class="flex items-center gap-2 mb-2">
+<h3 class="text-[#92a0c9] text-xs font-bold uppercase tracking-widest">Net Profit</h3>
+</div>
+<div class="flex items-end justify-between">
+<span class="text-white text-4xl font-mono font-bold">$124.5k</span>
+<div class="flex items-center gap-1 text-primary text-sm font-bold bg-primary/10 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-sm">north_east</span>
+<span>12%</span>
+</div>
+</div>
+<p class="text-[#566286] text-xs mt-4">Projected EOM: $150k</p>
+</div>
+</div>
+<!-- Dashboard Grid: Chart + Feed -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Hero Chart Section (2/3 width) -->
+<div class="lg:col-span-2 flex flex-col bg-surface-dark border border-border-dark rounded-xl p-6 relative overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-white text-base font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-accent-emerald">ssid_chart</span>
+                                    Spend Velocity
+                                </h3>
+<p class="text-[#566286] text-xs mt-1 uppercase tracking-wider">Real-time Data Stream</p>
+</div>
+<div class="text-right">
+<p class="text-white text-3xl font-mono font-bold tracking-tight">$42,300</p>
+<p class="text-accent-emerald text-sm font-medium">+8.4% <span class="text-[#566286] font-normal">Last 24h</span></p>
+</div>
+</div>
+<!-- Chart SVG Area -->
+<div class="flex-1 min-h-[300px] w-full relative">
+<!-- Y-Axis Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+<div class="w-full h-px bg-[#2d3340] border-t border-dashed border-[#3e4658]"></div>
+<div class="w-full h-px bg-[#2d3340] border-t border-dashed border-[#3e4658]"></div>
+<div class="w-full h-px bg-[#2d3340] border-t border-dashed border-[#3e4658]"></div>
+<div class="w-full h-px bg-[#2d3340] border-t border-dashed border-[#3e4658]"></div>
+<div class="w-full h-px bg-[#2d3340]"></div>
+</div>
+<svg class="absolute inset-0 w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 500 150">
+<defs>
+<lineargradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#0bda62" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#0bda62" stop-opacity="0"></stop>
+</lineargradient>
+<filter height="140%" id="glow" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="coloredBlur" stddeviation="3"></fegaussianblur>
+<femerge>
+<femergenode in="coloredBlur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+</defs>
+<!-- Area Fill -->
+<path d="M0 110 C 30 110, 50 40, 80 40 C 110 40, 130 90, 160 90 C 190 90, 210 30, 240 30 C 270 30, 290 100, 320 100 C 350 100, 370 60, 400 60 C 430 60, 450 45, 480 45 C 500 45, 500 120, 500 150 L 0 150 Z" fill="url(#chartGradient)"></path>
+<!-- Stroke Line -->
+<path d="M0 110 C 30 110, 50 40, 80 40 C 110 40, 130 90, 160 90 C 190 90, 210 30, 240 30 C 270 30, 290 100, 320 100 C 350 100, 370 60, 400 60 C 430 60, 450 45, 480 45 C 500 45, 500 120, 500 150" fill="none" filter="url(#glow)" stroke="#0bda62" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+</div>
+<!-- X-Axis Labels -->
+<div class="flex justify-between mt-4 px-2">
+<p class="text-[#566286] text-xs font-mono">00:00</p>
+<p class="text-[#566286] text-xs font-mono">04:00</p>
+<p class="text-[#566286] text-xs font-mono">08:00</p>
+<p class="text-[#566286] text-xs font-mono">12:00</p>
+<p class="text-[#566286] text-xs font-mono">16:00</p>
+<p class="text-[#566286] text-xs font-mono">20:00</p>
+</div>
+</div>
+<!-- Transactions Widget (1/3 width) -->
+<div class="flex flex-col bg-surface-dark border border-border-dark rounded-xl overflow-hidden h-full min-h-[400px]">
+<div class="p-4 border-b border-border-dark flex justify-between items-center bg-[#1d2129]">
+<h3 class="text-white text-sm font-bold uppercase tracking-wide">Live Feed</h3>
+<span class="flex size-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
+</div>
+<div class="flex-1 overflow-y-auto p-2 space-y-1">
+<!-- Transaction Item -->
+<div class="group flex items-center justify-between p-3 hover:bg-[#232c48] rounded-lg transition-colors cursor-default">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-md bg-[#232c48] group-hover:bg-[#2d3655] flex items-center justify-center text-[#92a0c9] transition-colors">
+<span class="material-symbols-outlined text-[18px]">dns</span>
+</div>
+<div class="flex flex-col">
+<span class="text-white text-sm font-medium">AWS Server Cost</span>
+<span class="text-[#566286] text-[10px] font-mono">10:42 AM • Recurring</span>
+</div>
+</div>
+<span class="text-white text-sm font-mono font-medium">-$450.00</span>
+</div>
+<!-- Transaction Item -->
+<div class="group flex items-center justify-between p-3 hover:bg-[#232c48] rounded-lg transition-colors cursor-default">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-md bg-[#232c48] group-hover:bg-[#2d3655] flex items-center justify-center text-[#92a0c9] transition-colors">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+</div>
+<div class="flex flex-col">
+<span class="text-white text-sm font-medium">Stripe Payout</span>
+<span class="text-[#566286] text-[10px] font-mono">10:38 AM • Income</span>
+</div>
+</div>
+<span class="text-accent-emerald text-sm font-mono font-medium">+$2,200.00</span>
+</div>
+<!-- Transaction Item -->
+<div class="group flex items-center justify-between p-3 hover:bg-[#232c48] rounded-lg transition-colors cursor-default">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-md bg-[#232c48] group-hover:bg-[#2d3655] flex items-center justify-center text-[#92a0c9] transition-colors">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+</div>
+<div class="flex flex-col">
+<span class="text-white text-sm font-medium">Slack Subscription</span>
+<span class="text-[#566286] text-[10px] font-mono">09:15 AM • Software</span>
+</div>
+</div>
+<span class="text-white text-sm font-mono font-medium">-$12.00</span>
+</div>
+<!-- Transaction Item -->
+<div class="group flex items-center justify-between p-3 hover:bg-[#232c48] rounded-lg transition-colors cursor-default">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-md bg-[#232c48] group-hover:bg-[#2d3655] flex items-center justify-center text-[#92a0c9] transition-colors">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+</div>
+<div class="flex flex-col">
+<span class="text-white text-sm font-medium">Cloudflare</span>
+<span class="text-[#566286] text-[10px] font-mono">08:50 AM • Infrastructure</span>
+</div>
+</div>
+<span class="text-white text-sm font-mono font-medium">-$20.00</span>
+</div>
+<!-- Transaction Item -->
+<div class="group flex items-center justify-between p-3 hover:bg-[#232c48] rounded-lg transition-colors cursor-default">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-md bg-[#232c48] group-hover:bg-[#2d3655] flex items-center justify-center text-[#92a0c9] transition-colors">
+<span class="material-symbols-outlined text-[18px]">flight</span>
+</div>
+<div class="flex flex-col">
+<span class="text-white text-sm font-medium">Delta Airlines</span>
+<span class="text-[#566286] text-[10px] font-mono">08:12 AM • Travel</span>
+</div>
+</div>
+<span class="text-white text-sm font-mono font-medium">-$845.20</span>
+</div>
+<!-- Transaction Item -->
+<div class="group flex items-center justify-between p-3 hover:bg-[#232c48] rounded-lg transition-colors cursor-default">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-md bg-[#232c48] group-hover:bg-[#2d3655] flex items-center justify-center text-[#92a0c9] transition-colors">
+<span class="material-symbols-outlined text-[18px]">database</span>
+</div>
+<div class="flex flex-col">
+<span class="text-white text-sm font-medium">MongoDB Atlas</span>
+<span class="text-[#566286] text-[10px] font-mono">Yesterday • Infrastructure</span>
+</div>
+</div>
+<span class="text-white text-sm font-mono font-medium">-$120.00</span>
+</div>
+</div>
+<div class="p-3 border-t border-border-dark bg-[#1d2129]">
+<button class="w-full py-2 text-xs font-bold text-[#92a0c9] hover:text-white hover:bg-[#232c48] rounded transition-colors uppercase tracking-wider">
+                                View All Transactions
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

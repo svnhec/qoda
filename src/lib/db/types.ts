@@ -280,6 +280,9 @@ export interface ClientUpdate {
 // AGENTS
 // -----------------------------------------------------------------------------
 
+/** Agent status for circuit breaker (green = normal, yellow = throttled, red = frozen) */
+export type AgentStatus = "green" | "yellow" | "red";
+
 export interface Agent {
   id: string;
   organization_id: string;
@@ -290,6 +293,19 @@ export interface Agent {
   current_spend_cents: CentsAmount;
   reset_date: string; // DATE as ISO string
   is_active: boolean;
+  // Qoda velocity controls
+  status: AgentStatus;
+  status_changed_at: string;
+  soft_limit_cents_per_minute: CentsAmount | null;
+  hard_limit_cents_per_minute: CentsAmount | null;
+  soft_limit_cents_per_day: CentsAmount | null;
+  hard_limit_cents_per_day: CentsAmount | null;
+  allowed_merchant_categories: string[] | null;
+  blocked_merchant_categories: string[] | null;
+  current_velocity_cents_per_minute: CentsAmount;
+  today_spend_cents: CentsAmount;
+  today_date: string;
+  last_transaction_at: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -305,6 +321,14 @@ export interface AgentInsert {
   current_spend_cents?: CentsAmount;
   reset_date?: string; // DATE as ISO string
   is_active?: boolean;
+  // Qoda velocity controls
+  status?: AgentStatus;
+  soft_limit_cents_per_minute?: CentsAmount | null;
+  hard_limit_cents_per_minute?: CentsAmount | null;
+  soft_limit_cents_per_day?: CentsAmount | null;
+  hard_limit_cents_per_day?: CentsAmount | null;
+  allowed_merchant_categories?: string[] | null;
+  blocked_merchant_categories?: string[] | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -316,6 +340,14 @@ export interface AgentUpdate {
   current_spend_cents?: CentsAmount;
   reset_date?: string;
   is_active?: boolean;
+  // Qoda velocity controls
+  status?: AgentStatus;
+  soft_limit_cents_per_minute?: CentsAmount | null;
+  hard_limit_cents_per_minute?: CentsAmount | null;
+  soft_limit_cents_per_day?: CentsAmount | null;
+  hard_limit_cents_per_day?: CentsAmount | null;
+  allowed_merchant_categories?: string[] | null;
+  blocked_merchant_categories?: string[] | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -385,6 +417,11 @@ export interface TransactionLog {
   status: TransactionStatus;
   rebilled: boolean;
   rebill_period_id: string | null;
+  // Task attribution (from migration 016)
+  task_id: string | null;
+  task_name: string | null;
+  task_category: string | null;
+  task_context: Record<string, unknown> | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -407,6 +444,11 @@ export interface TransactionLogInsert {
   status?: TransactionStatus;
   rebilled?: boolean;
   rebill_period_id?: string | null;
+  // Task attribution
+  task_id?: string | null;
+  task_name?: string | null;
+  task_category?: string | null;
+  task_context?: Record<string, unknown> | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -414,6 +456,11 @@ export interface TransactionLogUpdate {
   status?: TransactionStatus;
   rebilled?: boolean;
   rebill_period_id?: string | null;
+  // Task attribution
+  task_id?: string | null;
+  task_name?: string | null;
+  task_category?: string | null;
+  task_context?: Record<string, unknown> | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -445,6 +492,122 @@ export interface AuthorizationLogInsert {
 }
 
 // -----------------------------------------------------------------------------
+// AGENT LOGS (Qoda - for operational correlation)
+// -----------------------------------------------------------------------------
+
+export type AgentLogLevel = "debug" | "info" | "warn" | "error";
+
+export interface AgentLog {
+  id: string;
+  agent_id: string;
+  organization_id: string;
+  level: AgentLogLevel;
+  message: string;
+  transaction_id: string | null;
+  trace_id: string | null;
+  http_status: number | null;
+  latency_ms: number | null;
+  tokens_used: number | null;
+  cost_cents: CentsAmount | null;
+  prompt_preview: string | null;
+  response_preview: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface AgentLogInsert {
+  id?: string;
+  agent_id: string;
+  organization_id: string;
+  level?: AgentLogLevel;
+  message: string;
+  transaction_id?: string | null;
+  trace_id?: string | null;
+  http_status?: number | null;
+  latency_ms?: number | null;
+  tokens_used?: number | null;
+  cost_cents?: CentsAmount | null;
+  prompt_preview?: string | null;
+  response_preview?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+// -----------------------------------------------------------------------------
+// USER WEBHOOKS (Qoda - for custom integrations)
+// -----------------------------------------------------------------------------
+
+export type WebhookEvent =
+  | "transaction.created"
+  | "transaction.settled"
+  | "agent.status_changed"
+  | "agent.budget_exceeded"
+  | "card.issued"
+  | "card.declined";
+
+export interface UserWebhook {
+  id: string;
+  organization_id: string;
+  name: string;
+  url: string;
+  secret: string;
+  events: WebhookEvent[];
+  is_active: boolean;
+  last_triggered_at: string | null;
+  last_status_code: number | null;
+  failure_count: number;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserWebhookInsert {
+  id?: string;
+  organization_id: string;
+  name: string;
+  url: string;
+  secret: string;
+  events: WebhookEvent[];
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface UserWebhookUpdate {
+  name?: string;
+  url?: string;
+  events?: WebhookEvent[];
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+// -----------------------------------------------------------------------------
+// TEAM INVITES (Qoda - for team management)
+// -----------------------------------------------------------------------------
+
+export type InviteStatus = "pending" | "accepted" | "expired" | "revoked";
+
+export interface TeamInvite {
+  id: string;
+  organization_id: string;
+  email: string;
+  role: OrgRole;
+  token: string;
+  status: InviteStatus;
+  invited_by: string;
+  expires_at: string;
+  accepted_at: string | null;
+  created_at: string;
+}
+
+export interface TeamInviteInsert {
+  id?: string;
+  organization_id: string;
+  email: string;
+  role?: OrgRole;
+  invited_by: string;
+  expires_at?: string;
+}
+
+// -----------------------------------------------------------------------------
 // DATABASE ROW TYPES (BigInt as Strings)
 // -----------------------------------------------------------------------------
 // PostgreSQL returns bigint columns as strings in JSON.
@@ -465,6 +628,19 @@ export interface AgentRow {
   current_spend_cents: string; // PostgreSQL bigint comes as string
   reset_date: string;
   is_active: boolean;
+  // Qoda velocity controls (from migration 011)
+  status: AgentStatus;
+  status_changed_at: string;
+  soft_limit_cents_per_minute: string | null;
+  hard_limit_cents_per_minute: string | null;
+  soft_limit_cents_per_day: string | null;
+  hard_limit_cents_per_day: string | null;
+  allowed_merchant_categories: string[] | null;
+  blocked_merchant_categories: string[] | null;
+  current_velocity_cents_per_minute: string;
+  today_spend_cents: string;
+  today_date: string;
+  last_transaction_at: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -512,6 +688,11 @@ export interface TransactionLogRow {
   status: TransactionStatus;
   rebilled: boolean;
   rebill_period_id: string | null;
+  // Task attribution (from migration 016)
+  task_id: string | null;
+  task_name: string | null;
+  task_category: string | null;
+  task_context: Record<string, unknown> | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -546,6 +727,12 @@ export function parseAgent(row: AgentRow): Agent {
     ...row,
     monthly_budget_cents: BigInt(row.monthly_budget_cents),
     current_spend_cents: BigInt(row.current_spend_cents),
+    soft_limit_cents_per_minute: row.soft_limit_cents_per_minute ? BigInt(row.soft_limit_cents_per_minute) : null,
+    hard_limit_cents_per_minute: row.hard_limit_cents_per_minute ? BigInt(row.hard_limit_cents_per_minute) : null,
+    soft_limit_cents_per_day: row.soft_limit_cents_per_day ? BigInt(row.soft_limit_cents_per_day) : null,
+    hard_limit_cents_per_day: row.hard_limit_cents_per_day ? BigInt(row.hard_limit_cents_per_day) : null,
+    current_velocity_cents_per_minute: BigInt(row.current_velocity_cents_per_minute || '0'),
+    today_spend_cents: BigInt(row.today_spend_cents || '0'),
   };
 }
 

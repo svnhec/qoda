@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinObserve - Analytics</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1349ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101522",
+                        "card-dark": "#181b21",
+                        "border-dark": "#2a2f3a",
+                        "secondary-text": "#9ca3af",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem", 
+                        "md": "0.375rem",
+                        "lg": "0.5rem", 
+                        "xl": "0.75rem", 
+                        "full": "9999px"
+                    },
+                    gridTemplateColumns: {
+                        'bento': 'repeat(3, minmax(0, 1fr))',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        /* Custom scrollbar for "engineered" feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #101522; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #323f67; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5d8f; 
+        }
+        .chart-grid {
+            background-image: linear-gradient(to right, #232c48 1px, transparent 1px),
+                              linear-gradient(to bottom, #232c48 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.1;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-x-hidden">
+<div class="relative flex min-h-screen w-full flex-row">
+<!-- Side Navigation -->
+<aside class="hidden w-64 flex-col border-r border-border-dark bg-[#111522] lg:flex sticky top-0 h-screen">
+<div class="flex h-16 items-center px-6 border-b border-border-dark/50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[28px]">query_stats</span>
+<span class="text-white text-lg font-bold tracking-tight">FinObserve</span>
+</div>
+</div>
+<div class="flex flex-1 flex-col justify-between p-4">
+<nav class="flex flex-col gap-1">
+<div class="px-2 py-2 mb-2">
+<p class="text-xs font-semibold uppercase tracking-wider text-secondary-text">Platform</p>
+</div>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-secondary-text hover:bg-[#1c212e] hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white">dashboard</span>
+<span class="text-sm font-medium">Overview</span>
+</a>
+<a class="flex items-center gap-3 rounded-md bg-primary/10 border border-primary/20 px-3 py-2 text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] text-primary">pie_chart</span>
+<span class="text-sm font-medium">Analytics</span>
+</a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-secondary-text hover:bg-[#1c212e] hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white">receipt_long</span>
+<span class="text-sm font-medium">Transactions</span>
+</a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-secondary-text hover:bg-[#1c212e] hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white">account_balance_wallet</span>
+<span class="text-sm font-medium">Budgets</span>
+</a>
+</nav>
+<nav class="flex flex-col gap-1 border-t border-border-dark pt-4">
+<div class="px-2 py-2 mb-2">
+<p class="text-xs font-semibold uppercase tracking-wider text-secondary-text">System</p>
+</div>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-secondary-text hover:bg-[#1c212e] hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+<div class="mt-2 rounded-lg bg-[#181b21] p-3 border border-border-dark">
+<div class="flex items-center gap-3">
+<div class="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-xs font-bold text-white">JD</div>
+<div class="flex flex-col overflow-hidden">
+<p class="truncate text-sm font-medium text-white">Jane Doe</p>
+<p class="truncate text-xs text-secondary-text">Admin</p>
+</div>
+</div>
+</div>
+</nav>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex flex-1 flex-col h-full min-h-screen relative overflow-hidden">
+<!-- Technical Grid Background -->
+<div class="absolute inset-0 pointer-events-none chart-grid z-0"></div>
+<div class="relative z-10 flex flex-col flex-1 p-4 lg:p-8 max-w-[1600px] mx-auto w-full">
+<!-- Header Section -->
+<header class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+<div class="flex flex-col gap-1">
+<!-- Breadcrumbs -->
+<div class="flex items-center gap-2 text-sm text-secondary-text">
+<a class="hover:text-white transition-colors" href="#">Dashboard</a>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-white font-medium">Analytics</span>
+</div>
+<h1 class="text-2xl font-bold text-white tracking-tight">Financial Performance</h1>
+</div>
+<div class="flex flex-wrap items-center gap-3">
+<div class="flex items-center rounded-md border border-border-dark bg-card-dark px-3 py-1.5 shadow-sm">
+<span class="material-symbols-outlined text-secondary-text text-[18px] mr-2">calendar_today</span>
+<select class="bg-transparent text-sm text-white focus:outline-none border-none p-0 cursor-pointer">
+<option>Last 30 Days</option>
+<option>Last Quarter</option>
+<option>Year to Date</option>
+</select>
+</div>
+<button class="flex items-center gap-2 rounded-md bg-primary hover:bg-primary/90 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all focus:ring-2 focus:ring-primary/20">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Export Report
+                    </button>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-[minmax(180px,auto)]">
+<!-- Card 1: Spend by Vendor (Donut) - Spans 2 cols on large, 1 on md -->
+<div class="col-span-1 md:col-span-1 lg:col-span-1 xl:col-span-1 rounded-lg border border-border-dark bg-card-dark p-5 flex flex-col shadow-sm hover:border-border-dark/80 transition-colors">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xs font-semibold uppercase tracking-wider text-secondary-text">Spend by Vendor</h3>
+<span class="material-symbols-outlined text-secondary-text text-[16px] cursor-help" title="Detailed vendor breakdown">info</span>
+</div>
+<div class="flex flex-col items-center justify-center flex-1 relative min-h-[200px]">
+<!-- SVG Donut Chart -->
+<div class="relative w-48 h-48">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
+<!-- Background Circle -->
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#232c48" stroke-width="12"></circle>
+<!-- Segments - AWS (Primary) -->
+<circle class="drop-shadow-lg" cx="50" cy="50" fill="transparent" r="40" stroke="#1349ec" stroke-dasharray="150 251" stroke-dashoffset="0" stroke-width="12"></circle>
+<!-- Segments - Datadog (Teal) -->
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#2dd4bf" stroke-dasharray="60 251" stroke-dashoffset="-155" stroke-width="12"></circle>
+<!-- Segments - Snowflake (Purple) -->
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#a855f7" stroke-dasharray="41 251" stroke-dashoffset="-215" stroke-width="12"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+<span class="text-xs text-secondary-text">Total</span>
+<span class="text-lg font-bold text-white tabular-nums">$142k</span>
+</div>
+</div>
+</div>
+<div class="mt-4 flex flex-col gap-2">
+<div class="flex items-center justify-between text-sm">
+<div class="flex items-center gap-2">
+<span class="h-2 w-2 rounded-full bg-primary"></span>
+<span class="text-white">AWS</span>
+</div>
+<span class="font-medium tabular-nums text-secondary-text">58%</span>
+</div>
+<div class="flex items-center justify-between text-sm">
+<div class="flex items-center gap-2">
+<span class="h-2 w-2 rounded-full bg-[#2dd4bf]"></span>
+<span class="text-white">Datadog</span>
+</div>
+<span class="font-medium tabular-nums text-secondary-text">25%</span>
+</div>
+<div class="flex items-center justify-between text-sm">
+<div class="flex items-center gap-2">
+<span class="h-2 w-2 rounded-full bg-[#a855f7]"></span>
+<span class="text-white">Snowflake</span>
+</div>
+<span class="font-medium tabular-nums text-secondary-text">17%</span>
+</div>
+</div>
+</div>
+<!-- Card 2: Profit Margin (Stacked Bar) - Spans 2 cols on large -->
+<div class="col-span-1 md:col-span-1 lg:col-span-2 xl:col-span-2 rounded-lg border border-border-dark bg-card-dark p-5 flex flex-col shadow-sm hover:border-border-dark/80 transition-colors">
+<div class="flex items-center justify-between mb-2">
+<h3 class="text-xs font-semibold uppercase tracking-wider text-secondary-text">Profit Margin Analysis</h3>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<span class="h-2 w-2 rounded-sm bg-[#1349ec]"></span>
+<span class="text-xs text-secondary-text">Markup</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="h-2 w-2 rounded-sm bg-[#323f67]"></span>
+<span class="text-xs text-secondary-text">Cost</span>
+</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col justify-end pt-4 min-h-[240px]">
+<div class="flex h-full w-full items-end justify-between gap-2 md:gap-4 px-2">
+<!-- Bar Group -->
+<div class="flex w-full flex-col gap-1 group cursor-pointer">
+<div class="relative flex h-full flex-col justify-end gap-[2px]">
+<!-- Tooltip Trigger Area -->
+<div class="h-[30%] w-full rounded-sm bg-[#1349ec] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<div class="h-[45%] w-full rounded-sm bg-[#323f67] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-center text-[11px] font-medium text-secondary-text group-hover:text-white">Jan</span>
+</div>
+<div class="flex w-full flex-col gap-1 group cursor-pointer">
+<div class="relative flex h-full flex-col justify-end gap-[2px]">
+<div class="h-[35%] w-full rounded-sm bg-[#1349ec] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<div class="h-[42%] w-full rounded-sm bg-[#323f67] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-center text-[11px] font-medium text-secondary-text group-hover:text-white">Feb</span>
+</div>
+<div class="flex w-full flex-col gap-1 group cursor-pointer">
+<div class="relative flex h-full flex-col justify-end gap-[2px]">
+<div class="h-[28%] w-full rounded-sm bg-[#1349ec] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<div class="h-[48%] w-full rounded-sm bg-[#323f67] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-center text-[11px] font-medium text-secondary-text group-hover:text-white">Mar</span>
+</div>
+<div class="flex w-full flex-col gap-1 group cursor-pointer">
+<div class="relative flex h-full flex-col justify-end gap-[2px]">
+<div class="h-[40%] w-full rounded-sm bg-[#1349ec] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<div class="h-[40%] w-full rounded-sm bg-[#323f67] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-center text-[11px] font-medium text-secondary-text group-hover:text-white">Apr</span>
+</div>
+<div class="flex w-full flex-col gap-1 group cursor-pointer">
+<div class="relative flex h-full flex-col justify-end gap-[2px]">
+<div class="h-[45%] w-full rounded-sm bg-[#1349ec] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<div class="h-[38%] w-full rounded-sm bg-[#323f67] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-center text-[11px] font-medium text-secondary-text group-hover:text-white">May</span>
+</div>
+<div class="flex w-full flex-col gap-1 group cursor-pointer">
+<div class="relative flex h-full flex-col justify-end gap-[2px]">
+<div class="h-[42%] w-full rounded-sm bg-[#1349ec] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<div class="h-[45%] w-full rounded-sm bg-[#323f67] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-center text-[11px] font-medium text-secondary-text group-hover:text-white">Jun</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Top Spenders (Leaderboard) - Vertical List -->
+<div class="col-span-1 md:col-span-1 lg:col-span-1 xl:col-span-1 rounded-lg border border-border-dark bg-card-dark flex flex-col shadow-sm hover:border-border-dark/80 transition-colors">
+<div class="p-5 border-b border-border-dark">
+<h3 class="text-xs font-semibold uppercase tracking-wider text-secondary-text">Top Spenders</h3>
+</div>
+<div class="flex-1 overflow-y-auto p-2">
+<table class="w-full text-left text-sm">
+<tbody class="divide-y divide-border-dark/50">
+<!-- Row 1 -->
+<tr class="group hover:bg-white/5 transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center gap-3">
+<div class="flex h-8 w-8 items-center justify-center rounded bg-blue-900/30 text-blue-400">
+<span class="material-symbols-outlined text-[18px]">engineering</span>
+</div>
+<div>
+<p class="font-medium text-white">Engineering</p>
+<p class="text-[11px] text-secondary-text">Infrastructure</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3 text-right">
+<p class="font-semibold text-white tabular-nums">$50,234</p>
+<p class="text-[11px] text-red-400 flex justify-end items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">trending_up</span> 12.5%
+                                        </p>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-white/5 transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center gap-3">
+<div class="flex h-8 w-8 items-center justify-center rounded bg-purple-900/30 text-purple-400">
+<span class="material-symbols-outlined text-[18px]">campaign</span>
+</div>
+<div>
+<p class="font-medium text-white">Marketing</p>
+<p class="text-[11px] text-secondary-text">Ad Spend</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3 text-right">
+<p class="font-semibold text-white tabular-nums">$32,100</p>
+<p class="text-[11px] text-emerald-400 flex justify-end items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">trending_down</span> 4.2%
+                                        </p>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-white/5 transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center gap-3">
+<div class="flex h-8 w-8 items-center justify-center rounded bg-orange-900/30 text-orange-400">
+<span class="material-symbols-outlined text-[18px]">dns</span>
+</div>
+<div>
+<p class="font-medium text-white">Sales Tools</p>
+<p class="text-[11px] text-secondary-text">Licenses</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3 text-right">
+<p class="font-semibold text-white tabular-nums">$12,450</p>
+<p class="text-[11px] text-red-400 flex justify-end items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">trending_up</span> 2.1%
+                                        </p>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-white/5 transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center gap-3">
+<div class="flex h-8 w-8 items-center justify-center rounded bg-emerald-900/30 text-emerald-400">
+<span class="material-symbols-outlined text-[18px]">support_agent</span>
+</div>
+<div>
+<p class="font-medium text-white">Support</p>
+<p class="text-[11px] text-secondary-text">Software</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3 text-right">
+<p class="font-semibold text-white tabular-nums">$8,300</p>
+<p class="text-[11px] text-secondary-text flex justify-end items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">remove</span> 0.0%
+                                        </p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Card 4: Net Burn Rate Trend (Line Chart) - Full width bottom on mobile, spans 3 cols on xl -->
+<div class="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-3 rounded-lg border border-border-dark bg-card-dark p-5 flex flex-col shadow-sm hover:border-border-dark/80 transition-colors">
+<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col">
+<h3 class="text-xs font-semibold uppercase tracking-wider text-secondary-text">Daily Burn Rate</h3>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-2xl font-bold text-white tabular-nums">$4,230.50</span>
+<span class="text-xs text-emerald-400 font-medium">Avg. Daily</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="px-2 py-1 text-xs font-medium text-white bg-white/10 rounded hover:bg-white/20">7D</button>
+<button class="px-2 py-1 text-xs font-medium text-secondary-text hover:text-white hover:bg-white/5 rounded">14D</button>
+<button class="px-2 py-1 text-xs font-medium text-secondary-text hover:text-white hover:bg-white/5 rounded">30D</button>
+</div>
+</div>
+<div class="flex-1 w-full min-h-[220px] relative">
+<!-- Simplified Line Chart SVG -->
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 300">
+<!-- Gradient Defs -->
+<defs>
+<lineargradient id="gradientBurn" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#1349ec" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#1349ec" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Grid Lines -->
+<line stroke="#2a2f3a" stroke-width="1" x1="0" x2="1000" y1="250" y2="250"></line>
+<line stroke="#2a2f3a" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="1000" y1="150" y2="150"></line>
+<line stroke="#2a2f3a" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="1000" y1="50" y2="50"></line>
+<!-- Area Fill -->
+<path d="M0,220 C100,210 200,240 300,180 C400,120 500,160 600,140 C700,120 800,80 900,100 C950,110 1000,60 1000,60 V300 H0 Z" fill="url(#gradientBurn)"></path>
+<!-- The Line -->
+<path d="M0,220 C100,210 200,240 300,180 C400,120 500,160 600,140 C700,120 800,80 900,100 C950,110 1000,60 1000,60" fill="none" stroke="#1349ec" stroke-linecap="round" stroke-width="3" vector-effect="non-scaling-stroke"></path>
+<!-- Data Point (Last one) -->
+<circle cx="1000" cy="60" fill="#1349ec" r="4" stroke="#fff" stroke-width="2" vector-effect="non-scaling-stroke"></circle>
+</svg>
+<!-- Axis Labels -->
+<div class="absolute bottom-0 left-0 w-full flex justify-between text-[10px] text-secondary-text mt-2 px-2">
+<span>Mon 12</span>
+<span>Tue 13</span>
+<span>Wed 14</span>
+<span>Thu 15</span>
+<span>Fri 16</span>
+<span>Sat 17</span>
+<span>Sun 18</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Notes -->
+<div class="mt-8 flex items-center justify-between border-t border-border-dark pt-6 text-xs text-secondary-text">
+<p>Data updated: <span class="text-white font-mono">2023-10-24 14:32:01 UTC</span></p>
+<div class="flex gap-4">
+<a class="hover:text-white" href="#">API Status</a>
+<a class="hover:text-white" href="#">Documentation</a>
+<a class="hover:text-white" href="#">Support</a>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

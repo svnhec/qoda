@@ -20,9 +20,18 @@ export function createMiddlewareClient(request: NextRequest) {
     },
   });
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    // We cannot proceed without these, but we shouldn't 500 the middleware
+    // if it's on a non-auth path.
+    return { supabase: null, response };
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
@@ -43,52 +52,37 @@ export function createMiddlewareClient(request: NextRequest) {
 
 /**
  * Middleware function to refresh auth session and protect routes.
- * 
- * Protected routes:
- * - /dashboard/* - Requires authentication
- * 
- * Public routes:
- * - /auth/* - Authentication pages
- * - /api/* - API routes (handled separately)
- * - / - Landing page
  */
 export async function updateSession(request: NextRequest) {
-  const { supabase, response } = createMiddlewareClient(request);
+  try {
+    const { supabase, response } = createMiddlewareClient(request);
 
-  // Refresh the session
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+    // If supabase client couldn't be created (missing env vars)
+    if (!supabase) {
+      return response;
+    }
 
-  const pathname = request.nextUrl.pathname;
+    // Refresh the session - wrapped in try-catch to ignore network errors in middleware
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  // Check if accessing protected route
-  const isProtectedRoute = pathname.startsWith("/dashboard");
-  const isAuthRoute = pathname.startsWith("/auth");
-  const isSignOutRoute = pathname === "/auth/signout";
-  const isCallbackRoute = pathname === "/auth/callback";
-  const isDebugRoute = pathname === "/auth/debug";
+    const pathname = request.nextUrl.pathname;
+    const isProtectedRoute = pathname.startsWith("/dashboard");
 
-  // If accessing protected route without auth, redirect to login
-  if (isProtectedRoute && (!user || authError)) {
-    const redirectUrl = new URL("/auth/login", request.url);
-    redirectUrl.searchParams.set("redirect", request.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
+    // If accessing protected route without auth, redirect to login
+    if (isProtectedRoute && (!user || authError)) {
+      const redirectUrl = new URL("/auth/login", request.url);
+      redirectUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    return response;
+  } catch (error) {
+    // Fail safe - allow request to proceed if middleware crashes
+    console.error("Middleware error caught:", error);
+    return NextResponse.next();
   }
-
-  // If accessing auth routes while authenticated, redirect to dashboard
-  // Allow certain routes to be accessed while authenticated:
-  // - /auth/signout - to sign out
-  // - /auth/callback - to complete OAuth/email confirmation
-  // - /auth/debug - for development debugging
-  const allowedWhileAuth = isSignOutRoute || isCallbackRoute || isDebugRoute;
-  if (isAuthRoute && !allowedWhileAuth && user && !authError) {
-    const redirectUrl = new URL("/dashboard", request.url);
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  // Allow the request to proceed
-  return response;
 }
 

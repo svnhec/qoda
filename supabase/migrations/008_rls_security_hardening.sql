@@ -32,6 +32,7 @@ DROP POLICY IF EXISTS "System can update transaction logs" ON transaction_logs;
 
 -- Transaction logs: No INSERT/UPDATE policies (only service role)
 -- Select policy for members to view their org's logs
+DROP POLICY IF EXISTS "Members can view transaction logs" ON transaction_logs;
 CREATE POLICY "Members can view transaction logs"
   ON transaction_logs FOR SELECT
   USING (is_org_member(organization_id));
@@ -41,6 +42,7 @@ DROP POLICY IF EXISTS "System can insert authorizations log" ON authorizations_l
 
 -- Authorizations log: No INSERT policies (only service role)
 -- Select policy for members to view their org's authorizations
+DROP POLICY IF EXISTS "Members can view authorizations log" ON authorizations_log;
 CREATE POLICY "Members can view authorizations log"
   ON authorizations_log FOR SELECT
   USING (
@@ -57,6 +59,9 @@ CREATE POLICY "Members can view authorizations log"
 
 DROP POLICY IF EXISTS "Members can create virtual cards" ON virtual_cards;
 DROP POLICY IF EXISTS "Members can update virtual cards" ON virtual_cards;
+DROP POLICY IF EXISTS "Admins can create virtual cards" ON virtual_cards;
+DROP POLICY IF EXISTS "Admins can update virtual cards" ON virtual_cards;
+DROP POLICY IF EXISTS "Admins can delete virtual cards" ON virtual_cards;
 
 -- Create: Only admins/owners can issue cards (via API)
 CREATE POLICY "Admins can create virtual cards"
@@ -204,3 +209,5 @@ BEGIN
   RAISE NOTICE 'RLS Security Hardening Migration Complete';
 END;
 $$;
+
+

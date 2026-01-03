@@ -15,13 +15,12 @@ export async function POST() {
 
     // Sign out
     await supabase.auth.signOut();
-
-    // Redirect to home page
-    redirect("/");
   } catch (error) {
-    // Even if signout fails, redirect to home
+    // Even if signout fails, we want to redirect to home
     console.error("Signout error:", error);
-    redirect("/");
   }
+
+  // Redirect to home page (or login page)
+  return redirect("/auth/login");
 }
 

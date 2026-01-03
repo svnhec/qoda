@@ -1,136 +1,52 @@
-"use client";
-
 /**
- * Create New Client Page
+ * Create New Client Page (Onboarding Wizard)
  * =============================================================================
- * Form for creating a new client with validation.
- * Uses Server Actions for the actual creation.
+ * Multi-step onboarding for new clients.
+ * Handles Identity, Billing Method, and Commercial Terms.
  * =============================================================================
  */
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { createClientAction } from "../actions";
+import { ArrowLeft } from "lucide-react";
+import { CreateClientWizard } from "@/components/dashboard/create-client-wizard";
 
-export default function NewClientPage() {
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+export default async function NewClientPage() {
+    const supabase = await createClient();
 
-    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault();
-        setIsLoading(true);
-        setError(null);
+    // Auth Check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/auth/login?redirect=/dashboard/clients/new");
 
-        const formData = new FormData(e.currentTarget);
-        const input = {
-            name: formData.get("name") as string,
-            contact_email: formData.get("contact_email") as string || null,
-            contact_phone: formData.get("contact_phone") as string || null,
-        };
+    // Get Org Check
+    const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("default_organization_id")
+        .eq("id", user.id)
+        .single();
 
-        const result = await createClientAction(input);
-
-        if (result.success) {
-            router.push("/dashboard/clients");
-            router.refresh();
-        } else {
-            setError(result.error);
-            setIsLoading(false);
-        }
-    }
+    if (!profile?.default_organization_id) redirect("/dashboard?error=no_organization");
 
     return (
-        <div className="max-w-2xl mx-auto px-6 py-12">
-            {/* Back Link */}
-            <Link
-                href="/dashboard/clients"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
-            >
-                <ArrowLeft className="w-4 h-4" />
-                Back to Clients
-            </Link>
+        <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/5 via-[#050505] to-[#050505]">
+            <div className="w-full max-w-2xl">
+                {/* Back Link */}
+                <Link
+                    href="/dashboard/clients"
+                    className="inline-flex items-center gap-2 text-sm text-white/30 hover:text-white transition-colors mb-8"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Portfolio
+                </Link>
 
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-foreground">Add New Client</h1>
-                <p className="mt-2 text-muted-foreground">
-                    Create a new client to manage their AI agents and billing.
-                </p>
+                <div className="mb-8 text-center">
+                    <h1 className="text-4xl font-bold text-white tracking-tight mb-2">Onboard New Client</h1>
+                    <p className="text-white/40">Set up billing, payment methods, and margin configurations.</p>
+                </div>
+
+                <CreateClientWizard />
             </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Error Message */}
-                {error && (
-                    <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">
-                        {error}
-                    </div>
-                )}
-
-                {/* Name */}
-                <div className="space-y-2">
-                    <Label htmlFor="name">Client Name *</Label>
-                    <Input
-                        id="name"
-                        name="name"
-                        placeholder="e.g., Acme Corporation"
-                        required
-                        disabled={isLoading}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                        The company or project name for this client.
-                    </p>
-                </div>
-
-                {/* Contact Email */}
-                <div className="space-y-2">
-                    <Label htmlFor="contact_email">Contact Email</Label>
-                    <Input
-                        id="contact_email"
-                        name="contact_email"
-                        type="email"
-                        placeholder="billing@example.com"
-                        disabled={isLoading}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                        Primary email for billing and notifications.
-                    </p>
-                </div>
-
-                {/* Contact Phone */}
-                <div className="space-y-2">
-                    <Label htmlFor="contact_phone">Contact Phone</Label>
-                    <Input
-                        id="contact_phone"
-                        name="contact_phone"
-                        type="tel"
-                        placeholder="+1 (555) 123-4567"
-                        disabled={isLoading}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                        Optional phone number for the client.
-                    </p>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-4 pt-4">
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                        {isLoading ? "Creating..." : "Create Client"}
-                    </Button>
-                    <Link href="/dashboard/clients">
-                        <Button type="button" variant="outline" disabled={isLoading}>
-                            Cancel
-                        </Button>
-                    </Link>
-                </div>
-            </form>
         </div>
     );
 }

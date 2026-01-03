@@ -32,8 +32,7 @@ import Stripe from "stripe";
 // Environment variables
 const WEBHOOK_SECRET =
     process.env.STRIPE_ISSUING_TXN_WEBHOOK_SECRET ||
-    process.env.STRIPE_WEBHOOK_SECRET ||
-    "";
+    process.env.STRIPE_WEBHOOK_SECRET;
 const ENABLE_STRIPE_ISSUING = process.env.ENABLE_STRIPE_ISSUING === "true";
 
 export async function POST(request: NextRequest) {
@@ -103,8 +102,6 @@ export async function POST(request: NextRequest) {
     // -------------------------------------------------------------------------
     // STEP 3: Query card → agent → client → organization
     // -------------------------------------------------------------------------
-    let agentId: string;
-    let organizationId: string;
     let clientId: string | null = null;
     let markupBasisPoints = 1500n; // Default 1500 basis points = 15%
 
@@ -138,8 +135,8 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    agentId = cardData.agent_id;
-    organizationId = cardData.organization_id;
+    const agentId = cardData.agent_id;
+    const organizationId = cardData.organization_id;
 
     // Extract client_id from nested agent
     const agent = cardData.agents as unknown as {
@@ -197,13 +194,28 @@ export async function POST(request: NextRequest) {
         if (insertError) {
             // Check if it's a duplicate (already processed by another instance)
             if (insertError.code === "23505") { // unique_violation
-                console.warn(`Transaction ${transactionId} already processed, skipping`);
-                return NextResponse.json({ received: true, already_processed: true });
-            }
-            throw insertError;
-        }
+                // Recover existing settlement ID to check/resume state
+                const { data: existing } = await supabase
+                    .from("transaction_settlements")
+                    .select("id, spend_journal_entry_id")
+                    .eq("stripe_transaction_id", transactionId)
+                    .single();
 
-        settlementId = settlement.id;
+                if (existing?.spend_journal_entry_id) {
+                    console.warn(`Transaction ${transactionId} already processed, skipping`);
+                    return NextResponse.json({ received: true, already_processed: true });
+                }
+
+                if (!existing) throw insertError; // Should not happen given 23505
+
+                console.warn(`Resuming processing for incomplete transaction ${transactionId}`);
+                settlementId = existing.id;
+            } else {
+                throw insertError;
+            }
+        } else {
+            settlementId = settlement.id;
+        }
     } catch (err) {
         const error = err instanceof Error ? err : new Error("Failed to insert settlement");
         await logAuditError({
@@ -239,6 +251,7 @@ export async function POST(request: NextRequest) {
             description: `Settled: ${merchantName}`,
             metadata: {
                 stripe_transaction_id: transactionId,
+                idempotency_key: `settle_spend_${transactionId}`,
                 stripe_authorization_id: authorizationId ?? undefined,
                 agent_id: agentId,
                 client_id: clientId ?? undefined,
@@ -271,6 +284,7 @@ export async function POST(request: NextRequest) {
                 metadata: {
                     stripe_transaction_id: transactionId,
                     client_id: clientId,
+                    idempotency_key: `settle_markup_${transactionId}`,
                     base_amount_cents: amountCents.toString(),
                     markup_basis_points: markupBasisPoints.toString(),
                 },

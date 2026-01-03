@@ -1,27 +1,20 @@
 /**
- * Agents List Page
+ * Agents List Page (Fleet Command)
  * =============================================================================
- * Shows all agents for the organization with budget info.
- * Uses Server Components for data fetching (RLS enforced).
+ * "Fleet Command" view for managing AI agents.
+ * Features specialized high-density table with kill-switches.
  * =============================================================================
  */
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Search, Bot, CreditCard, AlertTriangle } from "lucide-react";
+import { Plus, Search, Bot, Zap, AlertTriangle, CheckCircle } from "lucide-react";
+import { logger } from "@/lib/logger";
+import { parseAgents, type AgentRow } from "@/lib/db/types";
+import { AgentTable } from "@/components/dashboard/agent-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { parseAgents, type AgentRow } from "@/lib/db/types";
-import { formatCurrency, subtractCents } from "@/lib/types/currency";
 
 interface PageProps {
     searchParams: Promise<{
@@ -35,276 +28,159 @@ export default async function AgentsPage({ searchParams }: PageProps) {
     const params = await searchParams;
     const supabase = await createClient();
 
-    // Get current user
-    const {
-        data: { user },
-        error: authError,
-    } = await supabase.auth.getUser();
+    // Auth Check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/auth/login?redirect=/dashboard/agents");
 
-    if (authError || !user) {
-        redirect("/auth/login?redirect=/dashboard/agents");
-    }
-
-    // Get user's default organization
+    // Get Org
     const { data: profile } = await supabase
         .from("user_profiles")
         .select("default_organization_id")
         .eq("id", user.id)
         .single();
 
-    if (!profile?.default_organization_id) {
-        redirect("/dashboard?error=no_organization");
+    const orgId = profile?.default_organization_id;
+
+    let agentsData: AgentRow[] | null = [];
+    let error = null;
+
+    if (orgId) {
+        // Fetch Agents only if we have an Org ID
+        let query = supabase
+            .from("agents")
+            .select(`*, clients (id, name)`)
+            .eq("organization_id", orgId)
+            .order("created_at", { ascending: false });
+
+        // Filters
+        if (params.search) query = query.ilike("name", `%${params.search}%`);
+        if (params.is_active !== undefined) query = query.eq("is_active", params.is_active === "true");
+
+        const result = await query;
+        agentsData = result.data as AgentRow[];
+        error = result.error;
+    } else {
+        // No Org ID means no agents visible
+        agentsData = [];
     }
 
-    const organizationId = profile.default_organization_id;
+    if (error) logger.error("Failed to fetch agents", { error: (error as any).message });
 
-    // Build query
-    let query = supabase
-        .from("agents")
-        .select(`
-      *,
-      clients (
-        id,
-        name
-      )
-    `)
-        .eq("organization_id", organizationId)
-        .order("created_at", { ascending: false });
-
-    // Apply search filter
-    if (params.search) {
-        query = query.ilike("name", `%${params.search}%`);
-    }
-
-    // Apply active filter
-    if (params.is_active !== undefined) {
-        query = query.eq("is_active", params.is_active === "true");
-    }
-
-    // Apply client filter
-    if (params.client_id) {
-        query = query.eq("client_id", params.client_id);
-    }
-
-    const { data: agentsData, error } = await query;
-
-    if (error) {
-        console.error("Failed to fetch agents:", error);
-    }
-
-    // Parse agents (string → BigInt for money fields)
-    const agents = parseAgents((agentsData || []) as AgentRow[]);
-
-    // Add client info back after parsing
-    const agentsWithClients = agents.map((agent, index) => ({
-        ...agent,
-        client: (agentsData?.[index] as { clients?: { id: string; name: string } })?.clients,
+    // Transform Data for UI
+    const rawAgents = parseAgents((agentsData || []) as AgentRow[]);
+    const tableAgents = rawAgents.map((agent, i) => ({
+        id: agent.id,
+        name: agent.name,
+        client: (agentsData?.[i] as { clients?: { id: string; name: string } })?.clients,
+        monthly_budget_cents: agent.monthly_budget_cents,
+        current_spend_cents: agent.current_spend_cents,
+        is_active: agent.is_active,
+        last_active: "Active 2m ago"
     }));
 
-    const activeCount = agents.filter((a) => a.is_active).length;
-
-    // Calculate total budget and spend
-    const totalBudget = agents.reduce((sum, a) => sum + a.monthly_budget_cents, 0n);
-    const totalSpend = agents.reduce((sum, a) => sum + a.current_spend_cents, 0n);
-
     return (
-        <div className="max-w-6xl mx-auto px-6 py-12">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground">Agents</h1>
-                    <p className="mt-2 text-muted-foreground">
-                        Manage your AI agents and their spending budgets.
-                    </p>
-                </div>
-                <Link href="/dashboard/agents/new">
-                    <Button>
-                        <Plus className="w-4 h-4" />
-                        Add Agent
-                    </Button>
-                </Link>
-            </div>
+        <div className="flex min-h-screen bg-background text-foreground animate-in fade-in duration-500">
+            {/* Collapsible Filter Sidebar */}
+            <div className="hidden lg:block w-72 border-r border-border p-6 bg-muted/40">
+                <div className="space-y-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Filters</h2>
+                    </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
-                <div className="p-4 rounded-xl border border-border bg-card">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Bot className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{agents.length}</p>
-                            <p className="text-sm text-muted-foreground">Total Agents</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="p-4 rounded-xl border border-border bg-card">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                            <Bot className="w-5 h-5 text-green-500" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{activeCount}</p>
-                            <p className="text-sm text-muted-foreground">Active</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="p-4 rounded-xl border border-border bg-card">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                            <CreditCard className="w-5 h-5 text-blue-500" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{formatCurrency(totalBudget)}</p>
-                            <p className="text-sm text-muted-foreground">Total Budget</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="p-4 rounded-xl border border-border bg-card">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                            <AlertTriangle className="w-5 h-5 text-orange-500" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{formatCurrency(totalSpend)}</p>
-                            <p className="text-sm text-muted-foreground">Total Spend</p>
+                    {/* Quick Filters */}
+                    <div className="space-y-3">
+                        <div className="text-xs text-muted-foreground/50 uppercase tracking-wider font-bold mb-2">Status</div>
+                        <div className="space-y-1">
+                            <label className="flex items-center gap-3 cursor-pointer p-2 rounded-md hover:bg-white/5 transition-colors group">
+                                <input
+                                    type="radio"
+                                    name="status"
+                                    value="all"
+                                    defaultChecked={!params.is_active}
+                                    className="appearance-none w-4 h-4 rounded-full border border-border bg-secondary checked:bg-primary checked:border-primary focus:ring-1 focus:ring-primary/50 transition-all"
+                                />
+                                <span className={!params.is_active ? "text-foreground font-medium" : "text-muted-foreground group-hover:text-foreground"}>All Agents</span>
+                            </label>
+                            <label className="flex items-center gap-3 cursor-pointer p-2 rounded-md hover:bg-white/5 transition-colors group">
+                                <input
+                                    type="radio"
+                                    name="status"
+                                    value="active"
+                                    defaultChecked={params.is_active === "true"}
+                                    className="appearance-none w-4 h-4 rounded-full border border-border bg-secondary checked:bg-emerald-500 checked:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all"
+                                />
+                                <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                                <span className={params.is_active === "true" ? "text-foreground font-medium" : "text-muted-foreground group-hover:text-foreground"}>Active</span>
+                            </label>
+                            <label className="flex items-center gap-3 cursor-pointer p-2 rounded-md hover:bg-white/5 transition-colors group">
+                                <input
+                                    type="radio"
+                                    name="status"
+                                    value="paused"
+                                    defaultChecked={params.is_active === "false"}
+                                    className="appearance-none w-4 h-4 rounded-full border border-border bg-secondary checked:bg-amber-500 checked:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all"
+                                />
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                                <span className={params.is_active === "false" ? "text-foreground font-medium" : "text-muted-foreground group-hover:text-foreground"}>Paused</span>
+                            </label>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Search & Filters */}
-            <div className="flex items-center gap-4 mb-6">
-                <form className="flex-1 max-w-md">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                            name="search"
-                            placeholder="Search agents..."
-                            defaultValue={params.search}
-                            className="pl-10"
-                        />
+                    {/* Quick Actions */}
+                    <div className="space-y-3">
+                        <div className="text-xs text-muted-foreground/50 uppercase tracking-wider font-bold mb-2">Views</div>
+                        <div className="space-y-1">
+                            <button className="w-full flex items-center gap-3 px-2 py-2 text-left text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-md transition-colors">
+                                <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                                High Velocity
+                            </button>
+                            <button className="w-full flex items-center gap-3 px-2 py-2 text-left text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-md transition-colors">
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                                Budget Alerts
+                            </button>
+                            <button className="w-full flex items-center gap-3 px-2 py-2 text-left text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-md transition-colors">
+                                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                                Healthy Agents
+                            </button>
+                        </div>
                     </div>
-                </form>
-                <div className="flex gap-2">
-                    <Link href="/dashboard/agents">
-                        <Button variant={!params.is_active ? "default" : "outline"} size="sm">
-                            All
-                        </Button>
-                    </Link>
-                    <Link href="/dashboard/agents?is_active=true">
-                        <Button variant={params.is_active === "true" ? "default" : "outline"} size="sm">
-                            Active
-                        </Button>
-                    </Link>
-                    <Link href="/dashboard/agents?is_active=false">
-                        <Button variant={params.is_active === "false" ? "default" : "outline"} size="sm">
-                            Inactive
-                        </Button>
-                    </Link>
                 </div>
             </div>
 
-            {/* Agents Table */}
-            {agents.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-border rounded-xl">
-                    <Bot className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium text-foreground mb-2">No agents yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                        Create your first agent to start managing AI spend.
-                    </p>
-                    <Link href="/dashboard/agents/new">
-                        <Button>
-                            <Plus className="w-4 h-4" />
-                            Add Your First Agent
-                        </Button>
-                    </Link>
+            {/* Main Content */}
+            <div className="flex-1 p-8 overflow-y-auto">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h1 className="text-2xl font-display font-bold text-foreground tracking-tight flex items-center gap-2 mb-1">
+                            <Bot className="w-6 h-6 text-primary" />
+                            Fleet Command
+                        </h1>
+                        <p className="text-muted-foreground text-sm">Manage your deployed AI agents and their authorized budgets.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <form className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                                name="search"
+                                defaultValue={params.search}
+                                placeholder="Find agent..."
+                                className="pl-9 w-64 bg-secondary border-transparent shadow-inner transition-colors"
+                            />
+                        </form>
+                        <Link href="/dashboard/agents/new">
+                            <Button variant="default">
+                                <Plus className="w-4 h-4" />
+                                Deploy Agent
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
-            ) : (
-                <div className="rounded-xl border border-border overflow-hidden">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-muted/50">
-                                <TableHead>Name</TableHead>
-                                <TableHead>Client</TableHead>
-                                <TableHead>Budget</TableHead>
-                                <TableHead>Spent</TableHead>
-                                <TableHead>Remaining</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {agentsWithClients.map((agent) => {
-                                const remaining = subtractCents(agent.monthly_budget_cents, agent.current_spend_cents);
-                                const isOverBudget = remaining < 0n;
-                                const usagePercent = agent.monthly_budget_cents > 0n
-                                    ? Number((agent.current_spend_cents * 100n) / agent.monthly_budget_cents)
-                                    : 0;
 
-                                return (
-                                    <TableRow key={agent.id}>
-                                        <TableCell>
-                                            <Link
-                                                href={`/dashboard/agents/${agent.id}`}
-                                                className="font-medium text-foreground hover:text-primary transition-colors"
-                                            >
-                                                {agent.name}
-                                            </Link>
-                                            {agent.description && (
-                                                <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                                                    {agent.description}
-                                                </p>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            {agent.client ? (
-                                                <Link
-                                                    href={`/dashboard/clients/${agent.client.id}`}
-                                                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                                                >
-                                                    {agent.client.name}
-                                                </Link>
-                                            ) : (
-                                                <span className="text-sm text-muted-foreground">—</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="font-medium">
-                                            {formatCurrency(agent.monthly_budget_cents)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <span className={isOverBudget ? "text-destructive" : ""}>
-                                                    {formatCurrency(agent.current_spend_cents)}
-                                                </span>
-                                                {usagePercent > 0 && (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        ({usagePercent}%)
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className={`font-medium ${isOverBudget ? "text-destructive" : "text-green-600"}`}>
-                                                {formatCurrency(remaining)}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span
-                                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${agent.is_active
-                                                    ? "bg-green-500/10 text-green-600"
-                                                    : "bg-muted text-muted-foreground"
-                                                    }`}
-                                            >
-                                                {agent.is_active ? "Active" : "Inactive"}
-                                            </span>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
-                        </TableBody>
-                    </Table>
-                </div>
-            )}
+                {/* Main Content */}
+                <AgentTable agents={tableAgents} />
+            </div>
         </div>
     );
 }

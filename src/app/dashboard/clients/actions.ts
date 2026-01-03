@@ -79,7 +79,7 @@ export async function createClientAction(
             metadata: validated.metadata,
         };
 
-        // Insert client
+        // Insert client (using Service Client to bypass RLS temporarily)
         const { data, error } = await supabase
             .from("clients")
             .insert(insertData)

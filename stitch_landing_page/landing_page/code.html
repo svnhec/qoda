@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinObserve - Financial Observability</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1349ec",
+                        "cyan-glow": "#22d3ee",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0a0a", // Deep charcoal/black per request
+                        "surface-dark": "#111522",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    backgroundImage: {
+                        'grid-pattern': "linear-gradient(to right, #232c48 1px, transparent 1px), linear-gradient(to bottom, #232c48 1px, transparent 1px)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom utilities for glassmorphism and glow */
+        .glass-panel {
+            background: rgba(17, 21, 34, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .text-glow {
+            text-shadow: 0 0 20px rgba(19, 73, 236, 0.5);
+        }
+        .chart-glow {
+            filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.3));
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-white overflow-x-hidden antialiased">
+<!-- Top Navigation -->
+<header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background-dark/80 backdrop-blur-md">
+<div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+<div class="flex items-center gap-4">
+<div class="flex size-8 items-center justify-center rounded bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-2xl">monitoring</span>
+</div>
+<h2 class="text-lg font-bold tracking-tight text-white">FinObserve</h2>
+</div>
+<nav class="hidden md:flex flex-1 justify-center gap-8">
+<a class="text-sm font-medium text-gray-400 hover:text-white transition-colors" href="#">Product</a>
+<a class="text-sm font-medium text-gray-400 hover:text-white transition-colors" href="#">Solutions</a>
+<a class="text-sm font-medium text-gray-400 hover:text-white transition-colors" href="#">Developers</a>
+<a class="text-sm font-medium text-gray-400 hover:text-white transition-colors" href="#">Pricing</a>
+</nav>
+<div class="flex items-center gap-3">
+<button class="hidden text-sm font-medium text-gray-300 hover:text-white sm:block px-3 py-2">Sign In</button>
+<button class="flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(19,73,236,0.4)]">
+                    Start Free
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content Wrapper -->
+<main class="relative flex min-h-screen flex-col pt-16">
+<!-- Background Grid Effect -->
+<div class="absolute inset-0 z-0 bg-grid-pattern opacity-[0.07] [background-size:40px_40px]"></div>
+<div class="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-background-dark/80 to-background-dark pointer-events-none"></div>
+<!-- Hero Section -->
+<section class="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-12 px-4 py-20 sm:px-6 lg:flex-row lg:items-center lg:px-8 lg:py-32">
+<!-- Left: Text Content -->
+<div class="flex flex-1 flex-col gap-8 lg:max-w-xl">
+<div class="flex flex-col gap-4">
+<div class="inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary-300">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+                        v2.4.0 Now Available
+                    </div>
+<h1 class="text-5xl font-medium leading-[0.95] tracking-[-0.04em] text-white sm:text-7xl lg:text-[84px] text-glow">
+                        Financial Observability
+                    </h1>
+<h2 class="text-lg font-normal leading-relaxed text-gray-400 sm:text-xl">
+                        Monitor every transaction. Debug ledgers in real-time. The mission control for modern fintech stacks.
+                    </h2>
+</div>
+<div class="flex flex-wrap gap-4">
+<button class="flex h-12 min-w-[160px] cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-6 text-base font-bold text-white transition-all hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(19,73,236,0.4)]">
+                        Start Integrating
+                        <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+<button class="flex h-12 min-w-[160px] cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-6 font-mono text-sm font-medium text-gray-300 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white">
+<span class="text-primary">$</span> npm install SDK
+                        <span class="material-symbols-outlined ml-2 text-sm text-gray-500">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Right: Code Block Visualization -->
+<div class="flex flex-1 items-center justify-center lg:justify-end">
+<div class="glass-panel relative w-full max-w-lg overflow-hidden rounded-xl shadow-2xl transition-transform hover:scale-[1.01] duration-500">
+<!-- Window Controls -->
+<div class="flex items-center gap-2 border-b border-white/5 bg-white/5 px-4 py-3">
+<div class="h-3 w-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
+<div class="h-3 w-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+<div class="h-3 w-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
+<div class="ml-4 font-mono text-xs text-gray-500">stream_log.json — bash — 80x24</div>
+</div>
+<!-- Code Content -->
+<div class="p-6 font-mono text-sm leading-relaxed text-gray-300">
+<div class="flex gap-3">
+<span class="text-gray-600">1</span>
+<span><span class="text-purple-400">const</span> stream = <span class="text-blue-400">observe</span>.connect({</span>
+</div>
+<div class="flex gap-3">
+<span class="text-gray-600">2</span>
+<span class="pl-4">mode: <span class="text-green-400">'realtime'</span>,</span>
+</div>
+<div class="flex gap-3">
+<span class="text-gray-600">3</span>
+<span class="pl-4">source: <span class="text-green-400">'ledger_main_v4'</span></span>
+</div>
+<div class="flex gap-3">
+<span class="text-gray-600">4</span>
+<span>});</span>
+</div>
+<div class="flex gap-3 my-2">
+<span class="text-gray-600">5</span>
+<span>stream.on(<span class="text-green-400">'data'</span>, (tx) =&gt; {</span>
+</div>
+<div class="flex gap-3">
+<span class="text-gray-600">6</span>
+<span class="pl-4 text-gray-500">// Incoming Transaction Stream</span>
+</div>
+<div class="flex gap-3">
+<span class="text-gray-600">7</span>
+<span class="pl-4">{</span>
+</div>
+<div class="flex gap-3">
+<span class="text-gray-600">8</span>
+<span class="pl-8"><span class="text-cyan-glow">"id"</span>: <span class="text-green-400">"tx_89201"</span>,</span>
+</div>
+<div class="flex gap-3">
+<span class="text-gray-600">9</span>
+<span class="pl-8"><span class="text-cyan-glow">"amount"</span>: <span class="text-orange-400">4500.00</span>,</span>
+</div>
+<div class="flex gap-3">
+<span class="text-gray-600">10</span>
+<span class="pl-8"><span class="text-cyan-glow">"currency"</span>: <span class="text-green-400">"USD"</span>,</span>
+</div>
+<div class="flex gap-3">
+<span class="text-gray-600">11</span>
+<span class="pl-8"><span class="text-cyan-glow">"latency"</span>: <span class="text-green-400">"12ms"</span></span>
+</div>
+<div class="flex gap-3">
+<span class="text-gray-600">12</span>
+<span class="pl-4">}</span>
+<span class="animate-pulse ml-1 inline-block h-4 w-2 bg-primary"></span>
+</div>
+</div>
+<!-- Glow Decoration -->
+<div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/20 blur-[60px]"></div>
+</div>
+</div>
+</section>
+<!-- Trust Ticker -->
+<section class="border-y border-white/5 bg-surface-dark py-8">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<p class="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-gray-500">Trusted by engineering teams at</p>
+<div class="relative flex overflow-hidden mask-linear-fade">
+<!-- Fading edges mask applied via inline styles usually, but mimicking here with layout -->
+<div class="flex w-full justify-between gap-12 opacity-40 grayscale transition-all hover:grayscale-0 hover:opacity-100">
+<!-- Logos (SVG placeholders) -->
+<div class="flex items-center gap-2 font-bold text-xl"><span class="material-symbols-outlined">diamond</span> Stripe</div>
+<div class="flex items-center gap-2 font-bold text-xl"><span class="material-symbols-outlined">change_history</span> Vercel</div>
+<div class="flex items-center gap-2 font-bold text-xl"><span class="material-symbols-outlined">schema</span> Figma</div>
+<div class="flex items-center gap-2 font-bold text-xl"><span class="material-symbols-outlined">deployed_code</span> Docker</div>
+<div class="flex items-center gap-2 font-bold text-xl"><span class="material-symbols-outlined">terminal</span> Linear</div>
+<div class="hidden sm:flex items-center gap-2 font-bold text-xl"><span class="material-symbols-outlined">dataset</span> Datadog</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Visual Anchor: Full Width Area Chart -->
+<section class="relative w-full overflow-hidden border-b border-white/5 bg-background-dark py-16 lg:py-24">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 mb-8">
+<div class="flex items-end justify-between">
+<div>
+<h3 class="text-2xl font-bold text-white">Global Velocity</h3>
+<p class="text-gray-400">Aggregated throughput across all nodes</p>
+</div>
+<div class="text-right">
+<p class="text-4xl font-mono font-bold text-white tabular-nums tracking-tight">24,892 <span class="text-lg text-gray-500 font-normal">tx/sec</span></p>
+<p class="text-sm font-medium text-green-400 flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> +12.4% vs last hour
+                        </p>
+</div>
+</div>
+</div>
+<!-- Chart Visualization -->
+<div class="relative h-[400px] w-full mt-4">
+<!-- Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between px-4 opacity-10">
+<div class="border-t border-white w-full"></div>
+<div class="border-t border-white w-full"></div>
+<div class="border-t border-white w-full"></div>
+<div class="border-t border-white w-full"></div>
+<div class="border-t border-white w-full"></div>
+</div>
+<!-- The Chart SVG -->
+<svg class="absolute bottom-0 left-0 right-0 h-full w-full chart-glow" fill="none" preserveaspectratio="none" viewbox="0 0 1440 400" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="chartGradient" x1="720" x2="720" y1="0" y2="400">
+<stop stop-color="#1349ec" stop-opacity="0.6"></stop>
+<stop offset="1" stop-color="#1349ec" stop-opacity="0"></stop>
+</lineargradient>
+<lineargradient gradientunits="userSpaceOnUse" id="lineGradient" x1="0" x2="1440" y1="0" y2="0">
+<stop stop-color="#1349ec"></stop>
+<stop offset="0.5" stop-color="#22d3ee"></stop> <!-- Cyan glow in middle -->
+<stop offset="1" stop-color="#1349ec"></stop>
+</lineargradient>
+</defs>
+<path d="M0 320L48 300C96 280 192 240 288 230C384 220 480 240 576 210C672 180 768 100 864 110C960 120 1056 220 1152 230C1248 240 1344 160 1392 120L1440 80V400H1392C1344 400 1248 400 1152 400C1056 400 960 400 864 400C768 400 672 400 576 400C480 400 384 400 288 400C192 400 96 400 48 400H0V320Z" fill="url(#chartGradient)"></path>
+<path d="M0 320L48 300C96 280 192 240 288 230C384 220 480 240 576 210C672 180 768 100 864 110C960 120 1056 220 1152 230C1248 240 1344 160 1392 120L1440 80" stroke="url(#lineGradient)" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<!-- Floating Data Points (Simulated) -->
+<div class="absolute left-1/2 top-[26%] flex -translate-x-1/2 flex-col items-center gap-1">
+<div class="h-3 w-3 rounded-full border-2 border-white bg-cyan-glow shadow-[0_0_10px_#22d3ee]"></div>
+<div class="rounded bg-background-dark/90 px-2 py-1 text-xs font-mono text-cyan-glow border border-cyan-glow/20 backdrop-blur-sm">
+                        Peak: 98ms
+                    </div>
+</div>
+</div>
+</section>
+<!-- Feature Grid (Secondary Info) -->
+<section class="py-24 bg-background-dark">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+<!-- Feature 1 -->
+<div class="group flex flex-col gap-4 rounded-2xl border border-white/5 bg-white/5 p-8 transition-colors hover:border-white/10 hover:bg-white/[0.07]">
+<div class="flex size-12 items-center justify-center rounded-lg bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-3xl">bolt</span>
+</div>
+<h3 class="text-xl font-bold text-white">Sub-millisecond Latency</h3>
+<p class="text-base text-gray-400 leading-relaxed">
+                            Our edge network ensures that your observability pipeline adds zero overhead to your transaction processing.
+                        </p>
+</div>
+<!-- Feature 2 -->
+<div class="group flex flex-col gap-4 rounded-2xl border border-white/5 bg-white/5 p-8 transition-colors hover:border-white/10 hover:bg-white/[0.07]">
+<div class="flex size-12 items-center justify-center rounded-lg bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-3xl">lock</span>
+</div>
+<h3 class="text-xl font-bold text-white">Ledger Immutability</h3>
+<p class="text-base text-gray-400 leading-relaxed">
+                            Every observed event is cryptographically signed and stored in an immutable append-only log.
+                        </p>
+</div>
+<!-- Feature 3 -->
+<div class="group flex flex-col gap-4 rounded-2xl border border-white/5 bg-white/5 p-8 transition-colors hover:border-white/10 hover:bg-white/[0.07]">
+<div class="flex size-12 items-center justify-center rounded-lg bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-3xl">api</span>
+</div>
+<h3 class="text-xl font-bold text-white">Universal SDK</h3>
+<p class="text-base text-gray-400 leading-relaxed">
+                            Drop-in support for Node.js, Go, Rust, and Python. Get started with just a few lines of configuration.
+                        </p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="border-t border-white/5 bg-background-dark py-12">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+<div class="flex items-center gap-2">
+<div class="flex size-6 items-center justify-center rounded bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-sm">monitoring</span>
+</div>
+<span class="text-sm font-semibold text-gray-300">FinObserve</span>
+</div>
+<div class="flex flex-wrap justify-center gap-8 text-sm text-gray-500">
+<a class="hover:text-primary transition-colors" href="#">Documentation</a>
+<a class="hover:text-primary transition-colors" href="#">API Reference</a>
+<a class="hover:text-primary transition-colors" href="#">Status</a>
+<a class="hover:text-primary transition-colors" href="#">Security</a>
+</div>
+<p class="text-xs text-gray-600">© 2024 Financial Observability Inc.</p>
+</div>
+</div>
+</footer>
+</body></html>

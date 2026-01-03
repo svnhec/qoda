@@ -15,6 +15,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { verifyWebhookSignature, getEventIdempotencyKey } from "@/lib/stripe/webhook";
 import { logWebhookEvent, logAuditError, logFinancialOperation } from "@/lib/db/audit";
+import { sendNotificationEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
@@ -205,10 +207,64 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: Send notification to agency if newly verified
-    // if (shouldSetVerified) {
-    //   await sendNotification(org.id, "Your Stripe account is ready!");
-    // }
+    // Send notification to agency if newly verified
+    if (shouldSetVerified) {
+      try {
+        // Get the organization owner to notify
+        const { data: ownerMembership } = await supabase
+          .from("org_members")
+          .select("user_id")
+          .eq("organization_id", org.id)
+          .eq("role", "owner")
+          .single();
+
+        if (ownerMembership) {
+          const { data: ownerProfile } = await supabase
+            .from("user_profiles")
+            .select("email, full_name")
+            .eq("id", ownerMembership.user_id)
+            .single();
+
+          if (ownerProfile?.email) {
+            await sendNotificationEmail({
+              email: ownerProfile.email,
+              subject: `🎉 ${org.name} - Stripe Account Verified!`,
+              message: `Great news! Your Stripe account for ${org.name} has been successfully verified and is now ready to issue virtual cards.
+
+**What's next:**
+• You can now create virtual cards for your AI agents
+• Set up automatic top-ups for your issuing balance
+• Start managing agent spend with real-time velocity controls
+
+**Your Stripe Account ID:** ${accountId}
+
+If you have any questions about your account setup or need help getting started, please don't hesitate to reach out to our support team.
+
+Welcome to the future of AI financial management! 🚀
+
+Best regards,
+The Qoda Team`,
+              actionUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/dashboard/settings/connect`,
+              actionText: "Go to Banking Settings"
+            });
+
+            logger.info("Stripe account verification notification sent", {
+              organizationId: org.id,
+              organizationName: org.name,
+              email: ownerProfile.email,
+              stripeAccountId: accountId
+            });
+          }
+        }
+      } catch (notificationError) {
+        logger.error("Failed to send Stripe verification notification", {
+          error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+          organizationId: org.id,
+          stripeAccountId: accountId
+        });
+        // Don't fail the webhook if notification fails
+      }
+    }
 
     return NextResponse.json({
       received: true,
@@ -219,7 +275,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     const error = err instanceof Error ? err : new Error("Unknown error");
-    console.error("Webhook error:", error);
+    logger.error("Stripe account webhook processing failed", {
+      error: error.message,
+      eventId,
+      stack: error.stack
+    });
 
     await logAuditError({
       action: "webhook_account_updated",

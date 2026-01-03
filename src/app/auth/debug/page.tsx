@@ -48,7 +48,7 @@ export default async function AuthDebugPage() {
 
         // Fetch org memberships
         const { data: membershipData } = await supabase
-            .from("org_memberships")
+            .from("org_members")
             .select(`
         role,
         organization:organizations(id, name, slug)

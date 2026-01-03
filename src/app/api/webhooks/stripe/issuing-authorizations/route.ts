@@ -6,14 +6,16 @@
  * CRITICAL TIMING: Must respond within 2 seconds or Stripe auto-declines.
  * 
  * Flow:
- * 1. Verify signature immediately (< 2 sec response required)
+ * 1. Verify signature immediately (<2 sec response required)
  * 2. Extract: authorization.id, amount, card.id, merchant.category
  * 3. Query virtual_cards → get agent_id, organization_id
- * 4. Query agents → get current_spend_cents, monthly_budget_cents
- * 5. Budget check: current_spend_cents + amount <= monthly_budget_cents
- * 6. Return { approved: true } or { approved: false, decline_code: 'insufficient_funds' }
- * 7. After 200 response: Log to authorizations_log (async, fire-and-forget)
- * 8. If approved: Create pending journal entry (debit agent wallet, credit pending liability)
+ * 4. Query agents → get budget, velocity limits, status, merchant controls
+ * 5. Check agent status (circuit breaker: green/yellow/red)
+ * 6. Check merchant category whitelist/blacklist
+ * 7. Budget check: current_spend_cents + amount <= monthly_budget_cents
+ * 8. Velocity check: hard limits block, soft limits warn
+ * 9. Return { approved: true } or { approved: false, decline_code: ... }
+ * 10. After 200 response: Log and update velocity metrics (async)
  * 
  * Per .cursorrules:
  * - Webhook signature MUST be verified using stripe.webhooks.constructEvent()
@@ -27,8 +29,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { verifyWebhookSignature } from "@/lib/stripe/webhook";
 import { logWebhookEvent, logAuditError } from "@/lib/db/audit";
 import { recordTransaction } from "@/lib/db/ledger";
+import { applyRateLimit, RATE_LIMITS } from "@/lib/security";
 import {
-    type AgentRow,
     type VirtualCardRow,
     serializeAuthorizationLogInsert,
 } from "@/lib/db/types";
@@ -44,6 +46,29 @@ interface AuthorizationDecision {
     approved: boolean;
     decline_code?: string;
     reason?: string;
+}
+
+/**
+ * Agent status type for circuit breaker.
+ */
+type AgentStatus = 'green' | 'yellow' | 'red';
+
+/**
+ * Extended agent data for authorization checks.
+ */
+interface AgentAuthData {
+    monthly_budget_cents: string;
+    current_spend_cents: string;
+    is_active: boolean;
+    status: AgentStatus;
+    soft_limit_cents_per_minute: string | null;
+    hard_limit_cents_per_minute: string | null;
+    soft_limit_cents_per_day: string | null;
+    hard_limit_cents_per_day: string | null;
+    today_spend_cents: string;
+    today_date: string;
+    allowed_merchant_categories: string[] | null;
+    blocked_merchant_categories: string[] | null;
 }
 
 /**
@@ -75,6 +100,10 @@ export async function POST(request: NextRequest) {
         console.warn("Stripe Issuing disabled - ignoring authorization webhook");
         return NextResponse.json({ received: true, disabled: true });
     }
+
+    // Rate limiting for webhooks
+    const rateLimited = applyRateLimit(request, "webhook:issuing-auth", RATE_LIMITS.WEBHOOK);
+    if (rateLimited) return rateLimited;
 
     try {
         // 1. Get raw body for signature verification
@@ -172,12 +201,25 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // 6. Get agent budget info
+        // 6. Get agent budget and velocity info
         const { data: agentData, error: agentError } = await supabase
             .from("agents")
-            .select("monthly_budget_cents, current_spend_cents, is_active")
+            .select(`
+                monthly_budget_cents, 
+                current_spend_cents, 
+                is_active,
+                status,
+                soft_limit_cents_per_minute,
+                hard_limit_cents_per_minute,
+                soft_limit_cents_per_day,
+                hard_limit_cents_per_day,
+                today_spend_cents,
+                today_date,
+                allowed_merchant_categories,
+                blocked_merchant_categories
+            `)
             .eq("id", cardData.agent_id)
-            .single<Pick<AgentRow, "monthly_budget_cents" | "current_spend_cents" | "is_active">>();
+            .single<AgentAuthData>();
 
         if (agentError || !agentData) {
             const decision: AuthorizationDecision = {
@@ -214,8 +256,68 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // 8. BUDGET CHECK: current_spend_cents + amount <= monthly_budget_cents
-        // PostgreSQL returns bigint as string - convert to BigInt
+        // 8. CHECK AGENT STATUS (Circuit Breaker)
+        const agentStatus = agentData.status as AgentStatus;
+        if (agentStatus === 'red') {
+            const decision: AuthorizationDecision = {
+                approved: false,
+                decline_code: "card_inactive",
+                reason: "Agent is frozen (circuit breaker tripped)",
+            };
+            return buildAuthorizationResponse(decision, startTime, {
+                authorizationId,
+                cardId,
+                amountCents,
+                merchantName,
+                merchantCategory,
+                organizationId: cardData.organization_id,
+                agentId: cardData.agent_id,
+            });
+        }
+
+        // 9. CHECK MERCHANT CATEGORY
+        if (merchantCategory) {
+            const blockedCategories = agentData.blocked_merchant_categories;
+            const allowedCategories = agentData.allowed_merchant_categories;
+
+            // Check blocked list first
+            if (blockedCategories && blockedCategories.includes(merchantCategory)) {
+                const decision: AuthorizationDecision = {
+                    approved: false,
+                    decline_code: "spending_controls",
+                    reason: `Merchant category blocked: ${merchantCategory}`,
+                };
+                return buildAuthorizationResponse(decision, startTime, {
+                    authorizationId,
+                    cardId,
+                    amountCents,
+                    merchantName,
+                    merchantCategory,
+                    organizationId: cardData.organization_id,
+                    agentId: cardData.agent_id,
+                });
+            }
+
+            // Check allowed list (if defined, must be in list)
+            if (allowedCategories && allowedCategories.length > 0 && !allowedCategories.includes(merchantCategory)) {
+                const decision: AuthorizationDecision = {
+                    approved: false,
+                    decline_code: "spending_controls",
+                    reason: `Merchant category not allowed: ${merchantCategory}`,
+                };
+                return buildAuthorizationResponse(decision, startTime, {
+                    authorizationId,
+                    cardId,
+                    amountCents,
+                    merchantName,
+                    merchantCategory,
+                    organizationId: cardData.organization_id,
+                    agentId: cardData.agent_id,
+                });
+            }
+        }
+
+        // 10. BUDGET CHECK: current_spend_cents + amount <= monthly_budget_cents
         const monthlyBudgetCents = BigInt(agentData.monthly_budget_cents);
         const currentSpendCents = BigInt(agentData.current_spend_cents);
         const projectedSpend = currentSpendCents + amountCents;
@@ -237,10 +339,64 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // 9. APPROVE the transaction
+        // 11. VELOCITY CHECK: Hard limits block, soft limits allow but warn
+        // Check daily hard limit
+        const todayDate = new Date().toISOString().split('T')[0];
+        let todaySpendCents = BigInt(agentData.today_spend_cents || '0');
+
+        // Reset daily spend if new day
+        if (agentData.today_date !== todayDate) {
+            todaySpendCents = 0n;
+        }
+
+        const projectedDailySpend = todaySpendCents + amountCents;
+
+        // Check daily hard limit
+        if (agentData.hard_limit_cents_per_day) {
+            const hardLimitDay = BigInt(agentData.hard_limit_cents_per_day);
+            if (projectedDailySpend > hardLimitDay) {
+                const decision: AuthorizationDecision = {
+                    approved: false,
+                    decline_code: "spending_controls",
+                    reason: `Daily hard limit exceeded: ${projectedDailySpend} > ${hardLimitDay}`,
+                };
+                return buildAuthorizationResponse(decision, startTime, {
+                    authorizationId,
+                    cardId,
+                    amountCents,
+                    merchantName,
+                    merchantCategory,
+                    organizationId: cardData.organization_id,
+                    agentId: cardData.agent_id,
+                });
+            }
+        }
+
+        // Check per-minute hard limit (simplified: just check transaction amount)
+        if (agentData.hard_limit_cents_per_minute) {
+            const hardLimitMinute = BigInt(agentData.hard_limit_cents_per_minute);
+            if (amountCents > hardLimitMinute) {
+                const decision: AuthorizationDecision = {
+                    approved: false,
+                    decline_code: "spending_controls",
+                    reason: `Transaction exceeds per-minute hard limit: ${amountCents} > ${hardLimitMinute}`,
+                };
+                return buildAuthorizationResponse(decision, startTime, {
+                    authorizationId,
+                    cardId,
+                    amountCents,
+                    merchantName,
+                    merchantCategory,
+                    organizationId: cardData.organization_id,
+                    agentId: cardData.agent_id,
+                });
+            }
+        }
+
+        // 12. APPROVE the transaction
         const decision: AuthorizationDecision = {
             approved: true,
-            reason: "Budget check passed",
+            reason: "All checks passed",
         };
 
         return buildAuthorizationResponse(decision, startTime, {

@@ -4,31 +4,40 @@
 
 @layer base {
   :root {
-    --background: 0 0% 3%;
+    /* Obsidian & Lime Theme */
+    --background: 240 10% 3.9%;
+    /* Zinc 950 #09090b */
     --foreground: 0 0% 98%;
-    --card: 0 0% 6%;
+
+    --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 6%;
+
+    --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 142 76% 46%;
-    --primary-foreground: 0 0% 2%;
-    --secondary: 0 0% 12%;
+
+    --primary: 84 81% 65%;
+    /* Lime 300 #bef264 */
+    --primary-foreground: 240 5.9% 10%;
+
+    --secondary: 240 3.7% 15.9%;
+    /* Zinc 800 */
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 142 76% 46%;
-    --accent-foreground: 0 0% 2%;
-    --destructive: 0 72% 51%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 84 81% 65%;
+    --accent-foreground: 240 5.9% 10%;
+
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 142 76% 46%;
-    --radius: 0.625rem;
-    --chart-1: 142 76% 46%;
-    --chart-2: 199 89% 48%;
-    --chart-3: 47 96% 53%;
-    --chart-4: 280 87% 65%;
-    --chart-5: 340 82% 52%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 84 81% 65%;
+    /* Lime Ring */
+
+    --radius: 0.5rem;
   }
 }
 
@@ -36,42 +45,52 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground;
   }
 }
 
-/* Custom scrollbar for dark theme */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+/* Custom Utility Classes for Glassmorphism */
+@layer utilities {
+  .glass {
+    @apply bg-black/40 backdrop-blur-md border border-white/10;
+  }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--background));
-}
+  .glass-card {
+    @apply bg-zinc-900/50 backdrop-blur-sm border border-white/5 hover:border-white/10 transition-all duration-300;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 4px;
-}
+  .text-glow {
+    text-shadow: 0 0 20px rgba(190, 242, 100, 0.5);
+    /* Lime Glow */
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
-}
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
 
-/* Focus styles */
-*:focus-visible {
-  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
-}
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
 
-/* Typography enhancements */
-.font-display {
-  font-feature-settings: "ss01", "ss02", "cv01", "cv02";
-}
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active:scale-95;
+  }
 
-/* Financial data styling - monospace for numbers */
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
-}
+  .card {
+    @apply rounded-xl border border-border bg-card text-card-foreground shadow-sm;
+  }
 
+  .card-hover {
+    @apply card hover:border-primary/50 transition-colors duration-300;
+  }
+
+  .metric-label {
+    @apply text-xs font-mono font-medium text-muted-foreground uppercase tracking-wider;
+  }
+
+  .value-medium {
+    @apply text-2xl font-bold tracking-tight text-foreground font-mono;
+  }
+}

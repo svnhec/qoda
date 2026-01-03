@@ -74,22 +74,22 @@ test.describe("Landing Page", () => {
     test("home page loads correctly", async ({ page }) => {
         await page.goto("/", { waitUntil: "networkidle" });
 
-        // Check for key elements
-        await expect(page.locator("h1")).toContainText(/Financial OS/i, { timeout: 10000 });
-        await expect(page.getByText(/AI Agents/i)).toBeVisible();
+        // Check for key elements - h1 contains "Financial Observability"
+        await expect(page.locator("h1")).toContainText(/Financial Observability/i, { timeout: 10000 });
+        await expect(page.getByText(/AI Agents/i).first()).toBeVisible();
 
-        // Check navigation exists
-        await expect(page.getByRole("link", { name: /login/i })).toBeVisible();
+        // Check navigation exists - link says "Sign in"
+        await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible();
     });
 
     test("navigation links work", async ({ page }) => {
         await page.goto("/", { waitUntil: "networkidle" });
 
-        // Wait for login link to appear
-        await expect(page.getByRole("link", { name: /login/i })).toBeVisible({ timeout: 10000 });
+        // Wait for sign in link to appear
+        await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible({ timeout: 10000 });
 
-        // Click login link
-        await page.getByRole("link", { name: /login/i }).click();
+        // Click sign in link
+        await page.getByRole("link", { name: /sign in/i }).click();
 
         // Should be on login page
         await waitForUrl(page, /\/auth\/login/);

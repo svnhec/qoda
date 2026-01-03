@@ -8,6 +8,7 @@
  */
 
 import { createServiceClient } from "@/lib/supabase/server";
+import { z } from "zod";
 import type { CentsAmount } from "@/lib/types/currency";
 import type {
   JournalEntryMetadata,
@@ -74,11 +75,19 @@ export async function createLedgerEntry(params: {
     createdBy,
   } = params;
 
-  // Validate amount
-  if (amountCents <= 0n) {
+  // Validate amount is a positive BigInt
+  const amountSchema = z.object({
+    amountCents: z.custom<CentsAmount>(
+      (val) => typeof val === "bigint" && val > 0n,
+      { message: "Amount must be a positive BigInt" }
+    ),
+  });
+
+  const validation = amountSchema.safeParse({ amountCents });
+  if (!validation.success) {
     return {
       success: false,
-      error: `Amount must be positive. Got: ${amountCents}`,
+      error: `Amount must be positive. Got: ${amountCents}`
     };
   }
 
