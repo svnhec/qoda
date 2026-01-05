@@ -205,7 +205,7 @@ export default function OnboardingPage() {
 
       {/* Right side - Step Content */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-10">
-        {/* <AnimatePresence mode="wait"> */}
+        <AnimatePresence mode="wait">
           {/* Step 1: Agency Identity */}
           {currentStep === "identity" && (
             <motion.div
@@ -379,7 +379,7 @@ export default function OnboardingPage() {
               </Button>
             </motion.div>
           )}
-        {/* </AnimatePresence> */}
+        </AnimatePresence>
       </div>
     </div>
   )
