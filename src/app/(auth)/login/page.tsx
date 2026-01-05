@@ -5,16 +5,19 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Github, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -26,20 +29,20 @@ export default function LoginPage() {
 
   // Handle URL parameters
   useEffect(() => {
-    console.log('Login page - searchParams:', searchParams.toString())
-    const message = searchParams.get("message")
-    const error = searchParams.get("error")
-    const redirect = searchParams.get("redirect")
+    console.log('Login page - searchParams:', searchParams)
+    const message = searchParams.message as string
+    const errorParam = searchParams.error as string
+    const redirect = searchParams.redirect as string
 
-    console.log('Parsed params:', { message, error, redirect })
+    console.log('Parsed params:', { message, error: errorParam, redirect })
 
     if (message) {
       console.log('Setting success message:', message)
       setSuccessMessage(decodeURIComponent(message))
     }
-    if (error) {
-      console.log('Setting error:', error)
-      setError(decodeURIComponent(error))
+    if (errorParam) {
+      console.log('Setting error:', errorParam)
+      setError(decodeURIComponent(errorParam))
     }
   }, [searchParams])
 
