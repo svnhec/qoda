@@ -25,3 +25,5 @@ export function AnimatedCounter({ value, duration = 2 }: AnimatedCounterProps) {
   return <span>{displayValue}</span>;
 }
 
+
+
