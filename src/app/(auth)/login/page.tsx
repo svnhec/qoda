@@ -3,53 +3,24 @@
 import type React from "react"
 
 import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Eye, EyeOff, Github, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
-
-        {/* Success message */}
-        <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-500 text-sm text-center">
-          Onboarding complete! Please sign in to access your dashboard.
+      <div className="w-full max-w-md space-y-6">
+        <h1 className="text-2xl font-bold text-center">Login Page Works!</h1>
+        <p className="text-center text-green-500">Onboarding complete! Please sign in to access your dashboard.</p>
+        <div className="text-center">
+          <p>Login functionality coming soon...</p>
         </div>
-
-        <form className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
-          >
-            Sign In
-          </button>
-        </form>
       </div>
     </div>
   )
