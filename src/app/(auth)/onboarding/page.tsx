@@ -70,9 +70,12 @@ export default function OnboardingPage() {
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep)
 
   const handleNext = () => {
+    console.log('handleNext called, current step:', currentStep, 'agency name:', agencyName)
     if (currentStep === "identity") {
+      console.log('Setting step to margins')
       setCurrentStep("margins")
     } else if (currentStep === "margins") {
+      console.log('Navigating to stripe-connect')
       router.push("/onboarding/stripe-connect")
     }
   }
@@ -196,7 +199,7 @@ export default function OnboardingPage() {
 
       {/* Right side - Step Content */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-10">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {/* Step 1: Agency Identity */}
           {currentStep === "identity" && (
             <div
@@ -262,9 +265,16 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
+                  <div className="mb-4 p-2 bg-black/20 rounded text-xs">
+                    Debug: agencyName = "{agencyName}" (length: {agencyName.length})
+                  </div>
+
                   <Button
-                    onClick={handleNext}
-                    disabled={!agencyName}
+                    onClick={() => {
+                      console.log('Button clicked, agencyName:', agencyName, 'disabled:', !agencyName)
+                      handleNext()
+                    }}
+                    disabled={!agencyName.trim()}
                     className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     Continue
