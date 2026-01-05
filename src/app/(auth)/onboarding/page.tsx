@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -63,6 +63,9 @@ export default function OnboardingPage() {
   const [agencyName, setAgencyName] = useState("")
   const [currency, setCurrency] = useState("USD")
   const [markup, setMarkup] = useState([15])
+
+  // Test ref for debugging
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep)
 
@@ -196,13 +199,9 @@ export default function OnboardingPage() {
         <AnimatePresence mode="wait">
           {/* Step 1: Agency Identity */}
           {currentStep === "identity" && (
-            <motion.div
+            <div
               key="identity"
               className="w-full max-w-xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
             >
               <div className="flex flex-col md:flex-row gap-8 items-start">
                 {/* Form */}
@@ -217,13 +216,33 @@ export default function OnboardingPage() {
                       <Label htmlFor="agency-name" className="text-xs uppercase tracking-wider text-muted-foreground">
                         Agency Name
                       </Label>
-                      <Input
+                      <input
+                        ref={inputRef}
                         id="agency-name"
                         value={agencyName}
-                        onChange={(e) => setAgencyName(e.target.value)}
+                        onChange={(e) => {
+                          console.log('Agency name changed:', e.target.value)
+                          setAgencyName(e.target.value)
+                        }}
                         placeholder="Acme AI Agency"
-                        className="bg-secondary/50 border-white/10 h-12"
+                        className="bg-white/20 border border-white/20 h-12 px-3 py-1 rounded-md text-white placeholder:text-gray-300 w-full"
+                        autoFocus
                       />
+
+                      {/* Debug button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          console.log('Current agency name:', agencyName)
+                          console.log('Input ref value:', inputRef.current?.value)
+                          if (inputRef.current) {
+                            inputRef.current.focus()
+                          }
+                        }}
+                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded text-sm"
+                      >
+                        Debug Input
+                      </button>
                     </div>
 
                     <div className="space-y-2">
