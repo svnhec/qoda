@@ -21,16 +21,9 @@ export default function LoginPage() {
   const [loadingState, setLoadingState] = useState("")
   const [error, setError] = useState("")
   const [shake, setShake] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
 
-  // Temporary: Hardcoded success message for testing
-  useEffect(() => {
-    console.log('Login page loaded - checking URL')
-    // For now, just show the success message to test if the page loads
-    if (window.location.search.includes('message=')) {
-      setSuccessMessage('Onboarding complete! Please sign in to access your dashboard.')
-    }
-  }, [])
+  // Show success message for users coming from onboarding
+  const [successMessage, setSuccessMessage] = useState("Onboarding complete! Please sign in to access your dashboard.")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
