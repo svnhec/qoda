@@ -50,7 +50,7 @@ export default function FundingOnboardingPage() {
     // Since users may not be fully authenticated yet (email verification),
     // redirect to login with a success message
     const message = encodeURIComponent("Onboarding complete! Please sign in to access your dashboard.");
-    const redirectUrl = `/auth/login?message=${message}&redirect=/dashboard`;
+    const redirectUrl = `/login?message=${message}&redirect=/dashboard`;
     console.log('Redirecting to:', redirectUrl)
     router.push(redirectUrl);
   }
