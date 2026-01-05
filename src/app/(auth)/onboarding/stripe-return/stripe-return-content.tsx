@@ -53,7 +53,10 @@ export function StripeReturnContent() {
   }, [searchParams])
 
   const handleContinue = () => {
-    router.push("/onboarding/funding")
+    // Automatically redirect to funding after successful verification
+    setTimeout(() => {
+      router.push("/onboarding/funding")
+    }, 500)
   }
 
   const handleRetry = () => {

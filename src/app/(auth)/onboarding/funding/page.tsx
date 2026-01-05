@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, DollarSign, Shield, Zap, Check, Building2, CreditCard, AlertTriangle, Rocket } from "lucide-react"
@@ -23,6 +23,11 @@ export default function FundingOnboardingPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ach")
   const [isProcessing, setIsProcessing] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
+
+  // Debug logging
+  useEffect(() => {
+    console.log('FundingOnboardingPage loaded successfully')
+  }, [])
 
   const handleAmountSelect = (value: number) => {
     setAmount(value)
