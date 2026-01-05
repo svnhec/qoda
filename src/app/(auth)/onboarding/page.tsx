@@ -221,11 +221,21 @@ export default function OnboardingPage() {
                         id="agency-name"
                         type="text"
                         value={agencyName}
-                        onChange={(e) => setAgencyName(e.target.value)}
+                        onChange={(e) => {
+                          console.log('Input changed:', e.target.value)
+                          setAgencyName(e.target.value)
+                        }}
+                        onFocus={() => console.log('Input focused')}
+                        onBlur={() => console.log('Input blurred')}
                         placeholder="Acme AI Agency"
                         className="bg-white/20 border border-white/20 text-white placeholder:text-gray-300 h-12 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-primary"
                         autoFocus
                       />
+
+                      {/* Debug display */}
+                      <div className="mt-2 text-xs text-gray-400">
+                        Current value: "{agencyName}" (length: {agencyName.length})
+                      </div>
                     </div>
 
                     <div className="space-y-2">
