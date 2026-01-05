@@ -67,15 +67,27 @@ export default function OnboardingPage() {
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep)
 
   const handleNext = () => {
+    console.log('handleNext called, current step:', currentStep, 'agency name:', agencyName)
     if (currentStep === "identity") {
+      console.log('Setting step to margins')
       setCurrentStep("margins")
     } else if (currentStep === "margins") {
+      console.log('Navigating to stripe-connect')
       router.push("/onboarding/stripe-connect")
     }
   }
 
+  useEffect(() => {
+    console.log('currentStep changed to:', currentStep)
+  }, [currentStep])
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex">
+      {/* Debug indicator */}
+      <div className="fixed top-4 left-4 z-50 bg-red-500 text-white px-3 py-1 rounded text-sm font-mono">
+        Current Step: {currentStep} | Agency: "{agencyName}"
+      </div>
+
       {/* Background grid */}
       <div className="fixed inset-0 retro-grid opacity-30" />
 
@@ -256,7 +268,10 @@ export default function OnboardingPage() {
                   </div>
 
                   <Button
-                    onClick={handleNext}
+                    onClick={() => {
+                      console.log('Continue button clicked, agencyName:', agencyName, 'disabled:', !agencyName.trim())
+                      handleNext()
+                    }}
                     disabled={!agencyName.trim()}
                     className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
