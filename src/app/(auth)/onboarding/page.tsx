@@ -270,7 +270,7 @@ export default function OnboardingPage() {
                   <CardPreview agencyName={agencyName} />
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 2: Define Margins */}
