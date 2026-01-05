@@ -26,14 +26,20 @@ export default function LoginPage() {
 
   // Handle URL parameters
   useEffect(() => {
+    console.log('Login page - searchParams:', searchParams.toString())
     const message = searchParams.get("message")
     const error = searchParams.get("error")
+    const redirect = searchParams.get("redirect")
+
+    console.log('Parsed params:', { message, error, redirect })
 
     if (message) {
-      setSuccessMessage(message)
+      console.log('Setting success message:', message)
+      setSuccessMessage(decodeURIComponent(message))
     }
     if (error) {
-      setError(error)
+      console.log('Setting error:', error)
+      setError(decodeURIComponent(error))
     }
   }, [searchParams])
 
@@ -129,6 +135,8 @@ export default function LoginPage() {
             exit={{ opacity: 0, y: -10, height: 0 }}
           >
             <span className="glow-text-green">{successMessage}</span>
+            {/* Debug: Show raw message */}
+            <div className="mt-1 text-xs opacity-50">DEBUG: "{successMessage}"</div>
           </motion.div>
         )}
       </AnimatePresence>
