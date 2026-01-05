@@ -278,22 +278,47 @@ export default function OnboardingPage() {
                       console.log('TEST BUTTON: Forcing step change')
                       setCurrentStep("margins")
                     }}
-                    className="mb-2 w-full h-8 bg-yellow-500 text-black text-xs rounded"
+                    style={{
+                      marginBottom: '8px',
+                      width: '100%',
+                      height: '32px',
+                      backgroundColor: '#eab308',
+                      color: 'black',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
                   >
                     FORCE NEXT STEP (Test)
                   </button>
 
-                  <Button
+                  <button
                     onClick={() => {
                       console.log('Continue button clicked, agencyName:', agencyName, 'disabled:', !agencyName.trim())
                       handleNext()
                     }}
                     disabled={!agencyName.trim()}
-                    className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90"
+                    style={{
+                      width: '100%',
+                      height: '48px',
+                      backgroundColor: 'hsl(var(--primary))',
+                      color: 'hsl(var(--primary-foreground))',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: agencyName.trim() ? 'pointer' : 'not-allowed',
+                      opacity: agencyName.trim() ? 1 : 0.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
                   >
                     Continue
                     <motion.svg
-                      className="w-4 h-4 ml-2"
+                      className="w-4 h-4"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -303,7 +328,7 @@ export default function OnboardingPage() {
                     >
                       <path d="M5 12h13M12 5l7 7-7 7" />
                     </motion.svg>
-                  </Button>
+                  </button>
                 </div>
 
                 {/* Card Preview */}
