@@ -217,12 +217,13 @@ export default function OnboardingPage() {
                       <Label htmlFor="agency-name" className="text-xs uppercase tracking-wider text-muted-foreground">
                         Agency Name
                       </Label>
-                      <Input
+                      <input
                         id="agency-name"
+                        type="text"
                         value={agencyName}
                         onChange={(e) => setAgencyName(e.target.value)}
                         placeholder="Acme AI Agency"
-                        className="bg-white/20 border-white/20 text-white placeholder:text-gray-300 h-12"
+                        className="bg-white/20 border border-white/20 text-white placeholder:text-gray-300 h-12 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-primary"
                         autoFocus
                       />
                     </div>
