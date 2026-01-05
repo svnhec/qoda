@@ -31,9 +31,28 @@ export default function ForgotPasswordPage() {
     }
 
     setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 2000))
-    setIsLoading(false)
-    setSent(true)
+
+    try {
+      const formData = new FormData()
+      formData.append("email", email)
+
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        setError(result.error)
+      } else {
+        setSent(true)
+      }
+    } catch (err) {
+      setError("An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (sent) {

@@ -7,6 +7,7 @@ import { SpendChart } from "@/components/dashboard/spend-chart"
 import { LiveTransactionFeed } from "@/components/dashboard/live-transaction-feed"
 import { AgentStatusList } from "@/components/dashboard/agent-status-list"
 import { SystemStatus } from "@/components/dashboard/system-status"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { dashboardStats } from "@/lib/mock-data"
 import { Activity, Bot, Shield } from "lucide-react"
 
@@ -104,6 +105,7 @@ export default function DashboardPage() {
           >
             {formattedTime}
           </motion.span>
+          <ThemeToggle />
         </motion.div>
       </motion.header>
 

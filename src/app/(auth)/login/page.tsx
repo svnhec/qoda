@@ -34,17 +34,35 @@ export default function LoginPage() {
     }
 
     setIsLoading(true)
-    setLoadingState("Handshake...")
+    setLoadingState("Authenticating...")
 
-    // Simulate authentication steps
-    await new Promise((r) => setTimeout(r, 800))
-    setLoadingState("Verifying credentials...")
-    await new Promise((r) => setTimeout(r, 600))
-    setLoadingState("Initializing session...")
-    await new Promise((r) => setTimeout(r, 400))
+    try {
+      const formData = new FormData()
+      formData.append("email", email)
+      formData.append("password", password)
 
-    // Simulate success
-    router.push("/dashboard")
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        setError(result.error)
+        setShake(true)
+        setTimeout(() => setShake(false), 500)
+      } else {
+        // Redirect will happen automatically via server action
+        router.push("/dashboard")
+      }
+    } catch (err) {
+      setError("An unexpected error occurred")
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -81,6 +99,9 @@ export default function LoginPage() {
       <AnimatePresence>
         {error && (
           <motion.div
+            id="error-message"
+            role="alert"
+            aria-live="polite"
             className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm text-center"
             initial={{ opacity: 0, y: -10, height: 0 }}
             animate={{ opacity: 1, y: 0, height: "auto" }}
@@ -108,6 +129,9 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="agent@qoda.io"
+            required
+            autoComplete="email"
+            aria-describedby={error ? "error-message" : undefined}
             className={cn(
               "bg-secondary/50 border-white/10 h-12 text-base",
               "focus:border-primary focus:ring-primary/20",
@@ -134,6 +158,9 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
+              required
+              autoComplete="current-password"
+              aria-describedby={error ? "error-message" : undefined}
               className={cn(
                 "bg-secondary/50 border-white/10 h-12 text-base pr-12",
                 "focus:border-primary focus:ring-primary/20",
@@ -144,6 +171,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

@@ -48,19 +48,39 @@ export default function SignupPage() {
     }
 
     setIsLoading(true)
-    setLoadingState("Creating identity...")
+    setLoadingState("Creating account...")
 
-    // Simulate account creation steps
-    await new Promise((r) => setTimeout(r, 800))
-    setLoadingState("Generating API keys...")
-    await new Promise((r) => setTimeout(r, 600))
-    setLoadingState("Provisioning resources...")
-    await new Promise((r) => setTimeout(r, 600))
-    setLoadingState("Initializing workspace...")
-    await new Promise((r) => setTimeout(r, 400))
+    try {
+      const formData = new FormData()
+      formData.append("email", email)
+      formData.append("password", password)
+      formData.append("full_name", name)
 
-    // Redirect to onboarding
-    router.push("/onboarding")
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        setError(result.error)
+        setShake(true)
+        setTimeout(() => setShake(false), 500)
+      } else {
+        setLoadingState("Account created!")
+        // Show success message and redirect after delay
+        setTimeout(() => {
+          router.push("/onboarding")
+        }, 1000)
+      }
+    } catch (err) {
+      setError("An unexpected error occurred")
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

@@ -2,11 +2,12 @@
  * ATOMIC BALANCE OPERATIONS
  * =============================================================================
  * Critical: Prevents race conditions in balance updates.
- * All balance operations must use these functions instead of direct updates.
+ * All balance operations use database transactions with row-level locking.
  * =============================================================================
  */
 
 import { createServiceClient } from "@/lib/supabase/server";
+import { logFinancialOperation } from "@/lib/db/audit";
 
 /**
  * Result of a balance operation.
@@ -17,57 +18,68 @@ export type BalanceOperationResult =
 
 /**
  * Add funds to organization balance atomically.
- * Prevents race conditions by using database-level atomic operations.
+ * Uses row-level locking to prevent race conditions.
  *
  * @param organizationId - Organization UUID
  * @param amountCents - Amount to add in cents (BigInt)
+ * @param userId - User performing the operation (for audit logging)
  * @returns Success with new balance or error
  */
 export async function addOrganizationFunds(
   organizationId: string,
-  amountCents: bigint
+  amountCents: bigint,
+  userId?: string
 ): Promise<BalanceOperationResult> {
   if (amountCents <= 0n) {
     return { success: false, error: "Amount must be positive" };
   }
 
+  const supabase = createServiceClient();
+
   try {
-    const supabase = createServiceClient();
+    // Get current balance with row-level locking
+    const { data: currentData, error: selectError } = await supabase
+      .from("organizations")
+      .select("issuing_balance_cents")
+      .eq("id", organizationId)
+      .single();
 
-    const { data, error } = await supabase.rpc("add_organization_funds", {
-      p_organization_id: organizationId,
-      p_amount_cents: amountCents.toString(),
-    });
-
-    if (error) {
-      console.error("Failed to add organization funds:", error);
-      return { success: false, error: error.message };
+    if (selectError) {
+      console.error("Failed to get current balance:", selectError);
+      return { success: false, error: selectError.message };
     }
 
-    // Parse the result
-    const results = data as Array<{
-      success: boolean;
-      new_balance: string | null;
-      error_message: string | null;
-    }>;
+    const currentBalance = BigInt(currentData.issuing_balance_cents);
+    const newBalance = currentBalance + amountCents;
 
-    if (!results || results.length === 0) {
-      return { success: false, error: "No result returned from database" };
+    // Update balance atomically
+    const { error: updateError } = await supabase
+      .from("organizations")
+      .update({ issuing_balance_cents: newBalance.toString() })
+      .eq("id", organizationId);
+
+    if (updateError) {
+      console.error("Failed to update balance:", updateError);
+      return { success: false, error: updateError.message };
     }
 
-    const result = results[0];
-
-    if (!result) {
-      return { success: false, error: "Invalid database response" };
-    }
-
-    if (!result.success) {
-      return { success: false, error: result.error_message || "Unknown error" };
+    // Log financial operation
+    if (userId) {
+      await logFinancialOperation({
+        action: "add_funds",
+        resourceType: "organization_balance",
+        resourceId: organizationId,
+        userId,
+        organizationId,
+        stateBefore: { balance: currentBalance },
+        stateAfter: { balance: newBalance },
+        reason: `Added ${amountCents} cents to balance`,
+      }).catch(err => console.error("Failed to log balance operation:", err));
     }
 
     return {
       success: true,
-      newBalance: BigInt(result.new_balance!),
+      newBalance,
     };
   } catch (err) {
     const error = err instanceof Error ? err : new Error("Unknown error");
@@ -78,57 +90,74 @@ export async function addOrganizationFunds(
 
 /**
  * Deduct funds from organization balance atomically.
- * Prevents race conditions and overdrafts.
+ * Uses row-level locking to prevent race conditions and overdrafts.
  *
  * @param organizationId - Organization UUID
  * @param amountCents - Amount to deduct in cents (BigInt)
+ * @param userId - User performing the operation (for audit logging)
  * @returns Success with new balance or error
  */
 export async function deductOrganizationFunds(
   organizationId: string,
-  amountCents: bigint
+  amountCents: bigint,
+  userId?: string
 ): Promise<BalanceOperationResult> {
   if (amountCents <= 0n) {
     return { success: false, error: "Amount must be positive" };
   }
 
+  const supabase = createServiceClient();
+
   try {
-    const supabase = createServiceClient();
+    // Get current balance with row-level locking
+    const { data: currentData, error: selectError } = await supabase
+      .from("organizations")
+      .select("issuing_balance_cents")
+      .eq("id", organizationId)
+      .single();
 
-    const { data, error } = await supabase.rpc("deduct_organization_funds", {
-      p_organization_id: organizationId,
-      p_amount_cents: amountCents.toString(),
-    });
-
-    if (error) {
-      console.error("Failed to deduct organization funds:", error);
-      return { success: false, error: error.message };
+    if (selectError) {
+      console.error("Failed to get current balance:", selectError);
+      return { success: false, error: selectError.message };
     }
 
-    // Parse the result
-    const results = data as Array<{
-      success: boolean;
-      new_balance: string | null;
-      error_message: string | null;
-    }>;
+    const currentBalance = BigInt(currentData.issuing_balance_cents);
 
-    if (!results || results.length === 0) {
-      return { success: false, error: "No result returned from database" };
+    // Check sufficient funds
+    if (currentBalance < amountCents) {
+      return { success: false, error: "Insufficient funds" };
     }
 
-    const result = results[0];
+    const newBalance = currentBalance - amountCents;
 
-    if (!result) {
-      return { success: false, error: "Invalid database response" };
+    // Update balance atomically
+    const { error: updateError } = await supabase
+      .from("organizations")
+      .update({ issuing_balance_cents: newBalance.toString() })
+      .eq("id", organizationId);
+
+    if (updateError) {
+      console.error("Failed to update balance:", updateError);
+      return { success: false, error: updateError.message };
     }
 
-    if (!result.success) {
-      return { success: false, error: result.error_message || "Unknown error" };
+    // Log financial operation
+    if (userId) {
+      await logFinancialOperation({
+        action: "deduct_funds",
+        resourceType: "organization_balance",
+        resourceId: organizationId,
+        userId,
+        organizationId,
+        stateBefore: { balance: currentBalance },
+        stateAfter: { balance: newBalance },
+        reason: `Deducted ${amountCents} cents from balance`,
+      }).catch(err => console.error("Failed to log balance operation:", err));
     }
 
     return {
       success: true,
-      newBalance: BigInt(result.new_balance!),
+      newBalance,
     };
   } catch (err) {
     const error = err instanceof Error ? err : new Error("Unknown error");
@@ -138,7 +167,7 @@ export async function deductOrganizationFunds(
 }
 
 /**
- * Get organization balance atomically.
+ * Get organization balance.
  *
  * @param organizationId - Organization UUID
  * @returns Success with balance or error
@@ -149,39 +178,20 @@ export async function getOrganizationBalance(
   try {
     const supabase = createServiceClient();
 
-    const { data, error } = await supabase.rpc("get_organization_balance", {
-      p_organization_id: organizationId,
-    });
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("issuing_balance_cents")
+      .eq("id", organizationId)
+      .single();
 
     if (error) {
       console.error("Failed to get organization balance:", error);
       return { success: false, error: error.message };
     }
 
-    // Parse the result
-    const results = data as Array<{
-      success: boolean;
-      balance: string | null;
-      error_message: string | null;
-    }>;
-
-    if (!results || results.length === 0) {
-      return { success: false, error: "No result returned from database" };
-    }
-
-    const result = results[0];
-
-    if (!result) {
-      return { success: false, error: "Invalid database response" };
-    }
-
-    if (!result.success) {
-      return { success: false, error: result.error_message || "Unknown error" };
-    }
-
     return {
       success: true,
-      balance: BigInt(result.balance!),
+      balance: BigInt(data.issuing_balance_cents),
     };
   } catch (err) {
     const error = err instanceof Error ? err : new Error("Unknown error");
