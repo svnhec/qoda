@@ -67,40 +67,16 @@ export default function OnboardingPage() {
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep)
 
   const handleNext = () => {
-    console.log('handleNext called, current step:', currentStep, 'agency name:', agencyName)
     if (currentStep === "identity") {
-      console.log('Setting step to margins')
       setCurrentStep("margins")
     } else if (currentStep === "margins") {
-      console.log('Navigating to stripe-connect')
       router.push("/onboarding/stripe-connect")
     }
   }
 
-  useEffect(() => {
-    console.log('currentStep changed to:', currentStep)
-  }, [currentStep])
-
-  // Global click handler for debugging
-  useEffect(() => {
-    const handleGlobalClick = (e: MouseEvent) => {
-      console.log('Global click detected on:', e.target)
-    }
-
-    document.addEventListener('click', handleGlobalClick)
-    return () => document.removeEventListener('click', handleGlobalClick)
-  }, [])
-
-  // Test that component is working
-  console.log('OnboardingPage rendered, agencyName:', agencyName, 'currentStep:', currentStep)
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex">
-      {/* Debug indicator */}
-      <div className="fixed top-4 left-4 z-50 bg-red-500 text-white px-3 py-1 rounded text-sm font-mono">
-        Current Step: {currentStep} | Agency: "{agencyName}"
-      </div>
-
       {/* Background grid */}
       <div className="fixed inset-0 retro-grid opacity-30" />
 
@@ -246,21 +222,11 @@ export default function OnboardingPage() {
                         id="agency-name"
                         type="text"
                         value={agencyName}
-                        onChange={(e) => {
-                          console.log('Input changed:', e.target.value)
-                          setAgencyName(e.target.value)
-                        }}
-                        onFocus={() => console.log('Input focused')}
-                        onBlur={() => console.log('Input blurred')}
+                        onChange={(e) => setAgencyName(e.target.value)}
                         placeholder="Acme AI Agency"
-                        className="bg-white/20 border border-white/20 text-white placeholder:text-gray-300 h-12 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-primary cursor-text pointer-events-auto relative z-10"
+                        className="bg-white/20 border border-white/20 text-white placeholder:text-gray-300 h-12 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-primary"
                         autoFocus
                       />
-
-                      {/* Debug display */}
-                      <div className="mt-2 text-xs text-gray-400">
-                        Current value: "{agencyName}" (length: {agencyName.length})
-                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -280,46 +246,9 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
-                  {/* Debug info */}
-                  <div className="mb-2 text-xs text-gray-400">
-                    Button enabled: {agencyName.trim() ? 'YES' : 'NO'} | Agency: "{agencyName.trim()}"
-                  </div>
-
-                  {/* Test button */}
-                  <button
-                    onClick={() => {
-                      console.log('TEST BUTTON: Forcing step change')
-                      setCurrentStep("margins")
-                    }}
-                    style={{
-                      marginBottom: '8px',
-                      width: '100%',
-                      height: '32px',
-                      backgroundColor: '#eab308',
-                      color: 'black',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    FORCE NEXT STEP (Test)
-                  </button>
 
                   <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      console.log('Continue button clicked - EVENT FIRED')
-                      console.log('agencyName:', agencyName, 'trimmed:', agencyName.trim())
-                      console.log('disabled check:', !agencyName.trim())
-
-                      if (agencyName.trim()) {
-                        console.log('Calling handleNext...')
-                        handleNext()
-                      } else {
-                        console.log('Button is disabled - no agency name')
-                      }
-                    }}
+                    onClick={handleNext}
                     disabled={!agencyName.trim()}
                     style={{
                       width: '100%',
