@@ -2,10 +2,10 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -21,6 +22,20 @@ export default function LoginPage() {
   const [loadingState, setLoadingState] = useState("")
   const [error, setError] = useState("")
   const [shake, setShake] = useState(false)
+  const [successMessage, setSuccessMessage] = useState("")
+
+  // Handle URL parameters
+  useEffect(() => {
+    const message = searchParams.get("message")
+    const error = searchParams.get("error")
+
+    if (message) {
+      setSuccessMessage(message)
+    }
+    if (error) {
+      setError(error)
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,6 +55,12 @@ export default function LoginPage() {
       const formData = new FormData()
       formData.append("email", email)
       formData.append("password", password)
+
+      // Add redirect parameter if present
+      const redirectTo = searchParams.get("redirect")
+      if (redirectTo) {
+        formData.append("redirect", redirectTo)
+      }
 
       const response = await fetch("/api/auth/signin", {
         method: "POST",
@@ -94,6 +115,23 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold tracking-tight mb-1">System Access</h1>
         <p className="text-sm text-muted-foreground">Enter credentials to continue</p>
       </motion.div>
+
+      {/* Success Message */}
+      <AnimatePresence>
+        {successMessage && (
+          <motion.div
+            id="success-message"
+            role="status"
+            aria-live="polite"
+            className="mb-6 p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-500 text-sm text-center"
+            initial={{ opacity: 0, y: -10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -10, height: 0 }}
+          >
+            <span className="glow-text-green">{successMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Error Message */}
       <AnimatePresence>
