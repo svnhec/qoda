@@ -12,11 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Github, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-interface LoginPageProps {
-  searchParams: { [key: string]: string | string[] | undefined }
-}
-
-export default function LoginPage({ searchParams }: LoginPageProps) {
+export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -27,24 +23,14 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
   const [shake, setShake] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
 
-  // Handle URL parameters
+  // Temporary: Hardcoded success message for testing
   useEffect(() => {
-    console.log('Login page - searchParams:', searchParams)
-    const message = searchParams.message as string
-    const errorParam = searchParams.error as string
-    const redirect = searchParams.redirect as string
-
-    console.log('Parsed params:', { message, error: errorParam, redirect })
-
-    if (message) {
-      console.log('Setting success message:', message)
-      setSuccessMessage(decodeURIComponent(message))
+    console.log('Login page loaded - checking URL')
+    // For now, just show the success message to test if the page loads
+    if (window.location.search.includes('message=')) {
+      setSuccessMessage('Onboarding complete! Please sign in to access your dashboard.')
     }
-    if (errorParam) {
-      console.log('Setting error:', errorParam)
-      setError(decodeURIComponent(errorParam))
-    }
-  }, [searchParams])
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
