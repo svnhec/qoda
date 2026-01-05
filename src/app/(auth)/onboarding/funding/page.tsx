@@ -362,7 +362,10 @@ export default function FundingOnboardingPage() {
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
               <Button
-                onClick={handleComplete}
+                onClick={() => {
+                  console.log('Launch Mission Control button clicked')
+                  handleComplete()
+                }}
                 className="w-full h-16 text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider"
               >
                 <Rocket className="w-6 h-6 mr-3" />
