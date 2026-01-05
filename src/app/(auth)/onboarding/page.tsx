@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -83,8 +83,17 @@ export default function OnboardingPage() {
   // Debug current step
   console.log('Current step:', currentStep, 'agencyName:', agencyName)
 
+  useEffect(() => {
+    console.log('Step changed to:', currentStep)
+  }, [currentStep])
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex">
+      {/* Debug indicator */}
+      <div className="fixed top-4 left-4 z-50 bg-red-500 text-white px-3 py-1 rounded text-sm font-mono">
+        Current Step: {currentStep} | Agency: "{agencyName}"
+      </div>
+
       {/* Background grid */}
       <div className="fixed inset-0 retro-grid opacity-30" />
 
@@ -270,6 +279,18 @@ export default function OnboardingPage() {
                   <div className="mb-4 p-2 bg-black/20 rounded text-xs">
                     Debug: agencyName = "{agencyName}" (length: {agencyName.length})
                   </div>
+
+                  {/* Manual test button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      console.log('Manual step change triggered')
+                      setCurrentStep("margins")
+                    }}
+                    className="mb-2 px-3 py-1 bg-yellow-500 text-black rounded text-sm"
+                  >
+                    FORCE NEXT STEP (Debug)
+                  </button>
 
                   <Button
                     onClick={() => {
