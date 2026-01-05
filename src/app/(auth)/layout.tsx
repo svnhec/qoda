@@ -2,34 +2,63 @@
 
 import type React from "react"
 import { motion } from "framer-motion"
+import { useState, useEffect } from "react"
+
+interface Particle {
+    id: number
+    x: number
+    y: number
+    targetY: number
+    duration: number
+    delay: number
+}
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+    const [particles, setParticles] = useState<Particle[]>([])
+    const [isClient, setIsClient] = useState(false)
+
+    useEffect(() => {
+        // Generate particles only on client side to avoid hydration mismatch
+        const newParticles = Array.from({ length: 30 }).map((_, i) => ({
+            id: i,
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            targetY: Math.random() * -200 - 100,
+            duration: Math.random() * 10 + 10,
+            delay: Math.random() * 5,
+        }))
+        setParticles(newParticles)
+        setIsClient(true)
+    }, [])
+
     return (
         <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center">
             <div className="noise-overlay" />
 
-            {/* Slow particle animation background */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                {Array.from({ length: 30 }).map((_, i) => (
-                    <motion.div
-                        key={i}
-                        className="absolute w-1 h-1 rounded-full bg-primary/20"
-                        initial={{
-                            x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1000),
-                            y: Math.random() * (typeof window !== "undefined" ? window.innerHeight : 800),
-                        }}
-                        animate={{
-                            y: [null, Math.random() * -200 - 100],
-                            opacity: [0, 1, 0],
-                        }}
-                        transition={{
-                            duration: Math.random() * 10 + 10,
-                            repeat: Number.POSITIVE_INFINITY,
-                            delay: Math.random() * 5,
-                        }}
-                    />
-                ))}
-            </div>
+            {/* Slow particle animation background - only render on client */}
+            {isClient && (
+                <div className="fixed inset-0 pointer-events-none z-0">
+                    {particles.map((particle) => (
+                        <motion.div
+                            key={particle.id}
+                            className="absolute w-1 h-1 rounded-full bg-primary/20"
+                            initial={{
+                                x: particle.x,
+                                y: particle.y,
+                            }}
+                            animate={{
+                                y: [null, particle.targetY],
+                                opacity: [0, 1, 0],
+                            }}
+                            transition={{
+                                duration: particle.duration,
+                                repeat: Number.POSITIVE_INFINITY,
+                                delay: particle.delay,
+                            }}
+                        />
+                    ))}
+                </div>
+            )}
 
             {/* Radial gradient */}
             <div className="fixed inset-0 pointer-events-none z-0">
