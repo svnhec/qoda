@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, DollarSign, Shield, Zap, Check, Building2, CreditCard, AlertTriangle, Rocket } from "lucide-react"
@@ -23,11 +23,6 @@ export default function FundingOnboardingPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ach")
   const [isProcessing, setIsProcessing] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
-
-  // Debug logging
-  useEffect(() => {
-    console.log('FundingOnboardingPage loaded successfully')
-  }, [])
 
   const handleAmountSelect = (value: number) => {
     setAmount(value)
@@ -51,7 +46,12 @@ export default function FundingOnboardingPage() {
   }
 
   const handleComplete = () => {
-    router.push("/dashboard")
+    // Since users may not be fully authenticated yet (email verification),
+    // redirect to login with a success message
+    const loginUrl = new URL("/auth/login", window.location.origin);
+    loginUrl.searchParams.set("message", "Onboarding complete! Please sign in to access your dashboard.");
+    loginUrl.searchParams.set("redirect", "/dashboard");
+    router.push(loginUrl.toString());
   }
 
   const isUnderMinimum = amount < 100
