@@ -46,12 +46,13 @@ export default function FundingOnboardingPage() {
   }
 
   const handleComplete = () => {
+    console.log('handleComplete called - redirecting to login')
     // Since users may not be fully authenticated yet (email verification),
     // redirect to login with a success message
-    const loginUrl = new URL("/auth/login", window.location.origin);
-    loginUrl.searchParams.set("message", "Onboarding complete! Please sign in to access your dashboard.");
-    loginUrl.searchParams.set("redirect", "/dashboard");
-    router.push(loginUrl.toString());
+    const message = encodeURIComponent("Onboarding complete! Please sign in to access your dashboard.");
+    const redirectUrl = `/auth/login?message=${message}&redirect=/dashboard`;
+    console.log('Redirecting to:', redirectUrl)
+    router.push(redirectUrl);
   }
 
   const isUnderMinimum = amount < 100
