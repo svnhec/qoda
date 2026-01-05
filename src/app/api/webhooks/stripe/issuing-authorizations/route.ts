@@ -29,7 +29,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { verifyWebhookSignature } from "@/lib/stripe/webhook";
 import { logWebhookEvent, logAuditError } from "@/lib/db/audit";
 import { recordTransaction } from "@/lib/db/ledger";
-import { applyRateLimit, RATE_LIMITS } from "@/lib/security";
+import { applyRateLimit } from "@/lib/security";
 import {
     type VirtualCardRow,
     serializeAuthorizationLogInsert,
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting for webhooks
-    const rateLimited = applyRateLimit(request, "webhook:issuing-auth", RATE_LIMITS.WEBHOOK);
+    const rateLimited = await applyRateLimit(request, "WEBHOOK", "webhook:issuing-auth");
     if (rateLimited) return rateLimited;
 
     try {

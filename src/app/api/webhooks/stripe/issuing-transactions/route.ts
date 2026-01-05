@@ -25,7 +25,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { logAuditError, logFinancialOperation } from "@/lib/db/audit";
-import { validateWebhookSignature, applyRateLimit, RATE_LIMITS } from "@/lib/security";
+import { validateWebhookSignature, applyRateLimit } from "@/lib/security";
 import { recordTransaction } from "@/lib/db/ledger";
 import Stripe from "stripe";
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting for webhooks
-    const rateLimited = applyRateLimit(request, "webhook:issuing-txn", RATE_LIMITS.WEBHOOK);
+    const rateLimited = await applyRateLimit(request, "WEBHOOK", "webhook:issuing-txn");
     if (rateLimited) return rateLimited;
 
     let rawBody: string;

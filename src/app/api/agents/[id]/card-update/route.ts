@@ -8,9 +8,29 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 // Mock stripe instance for now - replace with real import constant when configured
 const ENABLE_STRIPE_ISSUING = process.env.ENABLE_STRIPE_ISSUING === 'true';
+
+// Zod schema for card update requests
+const CardUpdateSchema = z.object({
+  action: z.enum(['set_status', 'set_limit']),
+  value: z.union([
+    z.enum(['active', 'inactive']), // for set_status
+    z.number().int().positive().max(10000000) // for set_limit (max $100k)
+  ])
+}).refine((data) => {
+  // Additional validation: ensure value type matches action
+  if (data.action === 'set_status') {
+    return typeof data.value === 'string' && (data.value === 'active' || data.value === 'inactive');
+  } else if (data.action === 'set_limit') {
+    return typeof data.value === 'number' && data.value > 0;
+  }
+  return false;
+}, {
+  message: "Value type must match action type"
+});
 
 export async function POST(
     request: NextRequest,
@@ -25,9 +45,15 @@ export async function POST(
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         const body = await request.json();
-        const { action, value } = body;
-        // action: 'set_status' | 'set_limit'
-        // value: 'active'|'inactive' OR limit_cents (number)
+        const validation = CardUpdateSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json({
+                error: "Invalid input",
+                details: validation.error.errors
+            }, { status: 400 });
+        }
+
+        const { action, value } = validation.data;
 
         const { data: profile } = await supabase
             .from("user_profiles")

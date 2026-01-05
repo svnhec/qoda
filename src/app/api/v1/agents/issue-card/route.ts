@@ -23,19 +23,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { logAuditError } from "@/lib/db/audit";
+import { z } from "zod";
 
 // Environment variables
 const ENABLE_STRIPE_ISSUING = process.env.ENABLE_STRIPE_ISSUING === "true";
 const MOCK_CARD_ISSUANCE = process.env.MOCK_CARD_ISSUANCE !== "false"; // Default to true if not set
 
 /**
- * Request body schema
+ * Request body schema with Zod validation
  */
-interface IssueCardBody {
-    agent_id: string;
-    spend_limit_cents?: string;
-    allowed_merchants?: string[];
-}
+const IssueCardSchema = z.object({
+  agent_id: z.string().uuid(),
+  spend_limit_cents: z.string()
+    .optional()
+    .transform((val) => val ? BigInt(val) : undefined)
+    .refine((val) => !val || val > 0n, "Spend limit must be positive")
+    .refine((val) => !val || val <= 10000000n, "Spend limit cannot exceed $100,000"),
+  allowed_merchants: z.array(z.string().length(4)).optional(), // MCC codes are 4 digits
+});
 
 /**
  * Generate mock card data for demo purposes
@@ -124,7 +129,7 @@ export async function POST(request: NextRequest) {
         // -------------------------------------------------------------------------
         // 4. Parse and validate request body
         // -------------------------------------------------------------------------
-        let body: IssueCardBody;
+        let body;
         try {
             body = await request.json();
         } catch {
@@ -134,15 +139,15 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { agent_id, spend_limit_cents } = body;
-
-        // Validate agent_id is present
-        if (!agent_id || typeof agent_id !== "string") {
-            return NextResponse.json(
-                { error: "agent_id is required and must be a string" },
-                { status: 400 }
-            );
+        const validation = IssueCardSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json({
+                error: "Invalid input",
+                details: validation.error.errors
+            }, { status: 400 });
         }
+
+        const { agent_id, spend_limit_cents } = validation.data;
 
         // Validate UUID format
         const uuidRegex =

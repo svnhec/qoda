@@ -8,31 +8,17 @@
  * =============================================================================
  */
 
-import { createServiceClient } from "@/lib/supabase/server";
+import { resilientLogAudit } from "@/lib/audit-queue";
 import type { AuditLogInsert } from "./types";
 
 /**
- * Log an audit event.
- * This function never throws - it logs to console if database insert fails.
- * 
+ * Log an audit event with resilient queue fallback.
+ * This function never throws - failed logs are queued for retry.
+ *
  * @param log - Audit log entry to insert
  */
 export async function logAudit(log: AuditLogInsert): Promise<void> {
-  try {
-    const supabase = createServiceClient();
-
-    const { error } = await supabase
-      .from("audit_log")
-      .insert(log);
-
-    if (error) {
-      // Log to console as fallback - never throw from audit logging
-      console.error("Failed to write audit log:", error.message, log);
-    }
-  } catch (err) {
-    // Never throw from audit logging
-    console.error("Audit log exception:", err, log);
-  }
+  await resilientLogAudit(log);
 }
 
 /**

@@ -1,4 +1,3 @@
-import { describe, it, expect } from "vitest";
 import { JournalEntryInsertSchema } from "@/lib/validation/ledger";
 
 describe("ledger validation", () => {
