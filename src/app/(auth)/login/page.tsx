@@ -25,8 +25,6 @@ export default function LoginPage() {
     </div>
   )
 }
-
-  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
