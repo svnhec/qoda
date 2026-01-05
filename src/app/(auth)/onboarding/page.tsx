@@ -267,6 +267,22 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
+                  {/* Debug info */}
+                  <div className="mb-2 text-xs text-gray-400">
+                    Button enabled: {agencyName.trim() ? 'YES' : 'NO'} | Agency: "{agencyName.trim()}"
+                  </div>
+
+                  {/* Test button */}
+                  <button
+                    onClick={() => {
+                      console.log('TEST BUTTON: Forcing step change')
+                      setCurrentStep("margins")
+                    }}
+                    className="mb-2 w-full h-8 bg-yellow-500 text-black text-xs rounded"
+                  >
+                    FORCE NEXT STEP (Test)
+                  </button>
+
                   <Button
                     onClick={() => {
                       console.log('Continue button clicked, agencyName:', agencyName, 'disabled:', !agencyName.trim())
