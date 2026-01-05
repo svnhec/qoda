@@ -840,7 +840,7 @@ export async function updateCardSpendingLimit(
  * STUB: Update card status (Freeze/Active)
  */
 export async function updateCardStatus(cardId: string, status: 'active' | 'inactive') {
-    console.log('[Mock Stripe] Set card ' + cardId + ' status to ' + status);
+    console.warn('[Mock Stripe] Set card ' + cardId + ' status to ' + status);
     return Promise.resolve({ success: true });
 }
 
@@ -848,6 +848,6 @@ export async function updateCardStatus(cardId: string, status: 'active' | 'inact
  * STUB: Update card limit
  */
 export async function updateCardLimit(cardId: string, limitCents: number) {
-     console.log('[Mock Stripe] Set card ' + cardId + ' limit to ' + limitCents);
+     console.warn('[Mock Stripe] Set card ' + cardId + ' limit to ' + limitCents);
      return Promise.resolve({ success: true });
 }

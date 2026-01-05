@@ -82,7 +82,7 @@ export default function FundingOnboardingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ type: "spring", stiffness: 80, damping: 20 }}
+            transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
           >
             <div className="text-center mb-8">
               <h1 className="text-2xl md:text-3xl font-bold mb-2 uppercase tracking-wider font-mono">
@@ -300,14 +300,14 @@ export default function FundingOnboardingPage() {
             className="w-full max-w-md text-center"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 80, damping: 20 }}
+            transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
           >
             {/* Animated rocket icon */}
             <motion.div
               className="relative w-32 h-32 mx-auto mb-8"
               initial={{ y: 50 }}
               animate={{ y: 0 }}
-              transition={{ type: "spring", delay: 0.2 }}
+              transition={{ type: "spring" as const, delay: 0.2 }}
             >
               <motion.div
                 className="absolute inset-0 rounded-full bg-primary/20 blur-2xl"
@@ -318,7 +318,7 @@ export default function FundingOnboardingPage() {
                 className="relative w-full h-full rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center glow-green"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ type: "spring", delay: 0.3 }}
+                transition={{ type: "spring" as const, delay: 0.3 }}
               >
                 <Rocket className="w-16 h-16 text-primary" />
               </motion.div>

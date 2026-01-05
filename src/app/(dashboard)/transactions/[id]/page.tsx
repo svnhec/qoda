@@ -68,9 +68,11 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const [copied, setCopied] = useState<string | null>(null)
 
   // Find transaction
-  const transaction = mockTransactions.find((t) => t.id === id) || mockTransactions[0]
+  const foundTransaction = mockTransactions.find((t) => t.id === id) || mockTransactions[0]
+  // Ensure we always have a valid transaction
+  const transaction = foundTransaction!
   const agent = mockAgents.find((a) => a.id === transaction.agentId)
-  const { date, time, timestamp } = formatDateTime(transaction.createdAt)
+  const { date, time } = formatDateTime(transaction.createdAt)
 
   const isDeclined = transaction.status === "declined"
 

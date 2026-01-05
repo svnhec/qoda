@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
       } else {
         setSent(true)
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred")
     } finally {
       setIsLoading(false)
@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
         )}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", stiffness: 80 }}
+        transition={{ type: "spring" as const, stiffness: 80 }}
         style={{ boxShadow: "0 0 60px oklch(0.8 0.2 155 / 0.1)" }}
       >
         <motion.div className="text-center" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
             className="w-16 h-16 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center mx-auto mb-6 glow-green"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ type: "spring", delay: 0.2 }}
+            transition={{ type: "spring" as const, delay: 0.2 }}
           >
             <ShieldCheck className="w-8 h-8 text-primary" />
           </motion.div>
@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
       className={cn("relative z-10 w-full max-w-md mx-4", "glass-card-intense p-8 md:p-10", "border border-white/10")}
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ type: "spring", stiffness: 80, damping: 20 }}
+      transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
     >
       {/* Header */}
       <motion.div

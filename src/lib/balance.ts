@@ -55,7 +55,7 @@ export async function addOrganizationFunds(
     // Update balance atomically
     const { error: updateError } = await supabase
       .from("organizations")
-      .update({ issuing_balance_cents: newBalance.toString() })
+      .update({ issuing_balance_cents: newBalance })
       .eq("id", organizationId);
 
     if (updateError) {
@@ -133,7 +133,7 @@ export async function deductOrganizationFunds(
     // Update balance atomically
     const { error: updateError } = await supabase
       .from("organizations")
-      .update({ issuing_balance_cents: newBalance.toString() })
+      .update({ issuing_balance_cents: newBalance })
       .eq("id", organizationId);
 
     if (updateError) {

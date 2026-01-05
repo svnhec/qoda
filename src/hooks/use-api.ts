@@ -12,6 +12,7 @@
  */
 
 import useSWR from "swr"
+import type { TransactionStatus } from "@/lib/types"
 import {
     clientsApi,
     agentsApi,
@@ -72,7 +73,12 @@ export function useTransactions(params?: {
     const key = params
         ? `transactions?${new URLSearchParams(params as Record<string, string>).toString()}`
         : "transactions"
-    return useSWR(key, () => transactionsApi.list(params))
+    // Cast status to TransactionStatus if present
+    const typedParams = params ? {
+        ...params,
+        status: params.status as TransactionStatus | undefined
+    } : undefined
+    return useSWR(key, () => transactionsApi.list(typedParams))
 }
 
 export function useTransaction(id: string | undefined) {

@@ -45,7 +45,7 @@ export default function StripeConnectPage() {
         className="w-full max-w-lg"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 80, damping: 20 }}
+        transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
       >
         <div className="glass-card p-8 md:p-10">
           {/* Connection diagram */}

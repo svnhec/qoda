@@ -1,17 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { mockAgents } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
-import { Bot, Pause, XCircle } from "lucide-react";
+import { Bot, Pause, XCircle, AlertTriangle } from "lucide-react";
+import { type Agent } from "@/hooks/use-dashboard-data";
+import { parseCents, formatCurrency } from "@/lib/types/currency";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+interface AgentStatusListProps {
+  agents?: Agent[];
 }
 
 const containerVariants = {
@@ -31,22 +27,43 @@ const itemVariants = {
     opacity: 1,
     x: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 15,
     },
   },
 };
 
-export function AgentStatusList() {
-  const activeAgents = mockAgents.filter((a) => a.status === "active");
+export function AgentStatusList({ agents = [] }: AgentStatusListProps) {
+  const activeAgents = agents.filter((a) => a.is_active && a.status === "green");
+
+  // Empty state
+  if (agents.length === 0) {
+    return (
+      <motion.div
+        className="glass-card p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring" as const, stiffness: 100, damping: 15 }}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Active Agents</span>
+        </div>
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <Bot className="w-12 h-12 text-muted-foreground/30 mb-4" />
+          <p className="text-sm text-muted-foreground">No agents configured</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">Create an agent to get started</p>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
       className="glass-card p-6"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 100, damping: 15 }}
+      transition={{ type: "spring" as const, stiffness: 100, damping: 15 }}
     >
       <div className="flex items-center justify-between mb-6">
         <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Active Agents</span>
@@ -61,56 +78,75 @@ export function AgentStatusList() {
       </div>
 
       <motion.div className="space-y-4" variants={containerVariants} initial="hidden" animate="visible">
-        {mockAgents.slice(0, 4).map((agent, index) => {
-          const dailyPercent = (agent.currentDailySpend / agent.dailyLimit) * 100;
+        {agents.slice(0, 4).map((agent) => {
+          const currentSpend = parseCents(agent.current_spend_cents);
+          const budget = parseCents(agent.monthly_budget_cents);
+          const dailyPercent = budget > 0n ? Number((currentSpend * 100n) / budget) : 0;
 
           const statusConfig = {
-            active: { icon: Bot, color: "text-success" },
-            paused: { icon: Pause, color: "text-warning" },
-            cancelled: { icon: XCircle, color: "text-destructive" },
+            green: { icon: Bot, color: "text-success", label: "Active" },
+            yellow: { icon: AlertTriangle, color: "text-warning", label: "Warning" },
+            red: { icon: XCircle, color: "text-destructive", label: "Stopped" },
           };
 
-          const config = statusConfig[agent.status];
+          const config = statusConfig[agent.status] || statusConfig.green;
           const StatusIcon = config.icon;
+
+          // Inactive override
+          if (!agent.is_active) {
+            return (
+              <motion.div
+                key={agent.id}
+                variants={itemVariants}
+                whileHover={{ scale: 1.02, x: 4 }}
+                transition={{ type: "spring" as const, stiffness: 400 }}
+                className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] cursor-pointer opacity-50"
+              >
+                <Pause className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm truncate">{agent.name}</p>
+                  <p className="text-[10px] text-muted-foreground">Paused</p>
+                </div>
+              </motion.div>
+            );
+          }
 
           return (
             <motion.div
               key={agent.id}
               variants={itemVariants}
               whileHover={{ scale: 1.02, x: 4 }}
-              transition={{ type: "spring", stiffness: 400 }}
-              className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] cursor-pointer"
+              transition={{ type: "spring" as const, stiffness: 400 }}
+              className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] cursor-pointer group"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <motion.div
-                    animate={agent.status === "active" ? { scale: [1, 1.2, 1] } : {}}
-                    transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, delay: index * 0.3 }}
-                  >
-                    <StatusIcon className={cn("h-3.5 w-3.5", config.color)} />
-                  </motion.div>
-                  <span className="text-sm truncate max-w-[140px]">{agent.name}</span>
-                </div>
-                <span className="text-[10px] text-muted-foreground tabular-nums">•••• {agent.cardLastFour}</span>
-              </div>
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+              >
+                <StatusIcon className={cn("h-4 w-4", config.color)} />
+              </motion.div>
 
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-muted-foreground uppercase tracking-wider">Daily Limit</span>
-                  <span className="tabular-nums">
-                    {formatCurrency(agent.currentDailySpend)} / {formatCurrency(agent.dailyLimit)}
-                  </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm truncate group-hover:text-primary transition-colors">
+                    {agent.name}
+                  </p>
                 </div>
-                <div className="relative h-1 rounded-full bg-white/5 overflow-hidden">
-                  <motion.div
-                    className={cn(
-                      "absolute inset-y-0 left-0 rounded-full",
-                      dailyPercent > 95 ? "bg-destructive" : dailyPercent > 80 ? "bg-warning" : "bg-primary",
-                    )}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${dailyPercent}%` }}
-                    transition={{ delay: 0.5 + index * 0.1, duration: 1, ease: "easeOut" }}
-                  />
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      className={cn(
+                        "h-full rounded-full",
+                        dailyPercent > 90 ? "bg-destructive" : dailyPercent > 70 ? "bg-warning" : "bg-primary"
+                      )}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(dailyPercent, 100)}%` }}
+                      transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                    {formatCurrency(currentSpend)}
+                  </span>
                 </div>
               </div>
             </motion.div>
@@ -120,6 +156,3 @@ export function AgentStatusList() {
     </motion.div>
   );
 }
-
-
-

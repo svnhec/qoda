@@ -42,7 +42,7 @@ async function initializeRedis() {
     await redisClient.connect();
     redisConnected = true;
 
-    console.log('✅ Redis connected successfully for distributed rate limiting');
+    // Redis connected successfully - silent in production
     return redisClient;
 
   } catch (error) {
@@ -74,16 +74,10 @@ function cleanupRateLimitStore() {
   if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
 
   lastCleanup = now;
-  let cleaned = 0;
   for (const [key, entry] of rateLimitStore.entries()) {
     if (entry.resetAt < now) {
       rateLimitStore.delete(key);
-      cleaned++;
     }
-  }
-
-  if (cleaned > 0) {
-    console.log(`Rate limit cleanup: removed ${cleaned} expired entries`);
   }
 }
 

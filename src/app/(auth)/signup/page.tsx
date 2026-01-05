@@ -74,7 +74,7 @@ export default function SignupPage() {
           router.push("/onboarding")
         }, 1000)
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred")
       setShake(true)
       setTimeout(() => setShake(false), 500)
@@ -94,7 +94,7 @@ export default function SignupPage() {
       )}
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ type: "spring", stiffness: 80, damping: 20 }}
+      transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
       style={{
         boxShadow: error ? undefined : "0 0 60px oklch(0.8 0.2 155 / 0.1)",
       }}

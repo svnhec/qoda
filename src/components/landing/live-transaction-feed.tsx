@@ -19,6 +19,7 @@ export function LiveTransactionFeed() {
     const interval = setInterval(() => {
       setVisibleTxs((prev) => {
         const newTx = transactions[Math.floor(Math.random() * transactions.length)];
+        if (!newTx) return prev;
         return [newTx, ...prev.slice(0, 2)];
       });
       setKey((k) => k + 1);

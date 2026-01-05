@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { useDashboardStore, Transaction } from '@/store/dashboard-store';
+import { useDashboardStore, type Transaction, type DashboardState } from '@/store/dashboard-store';
 
 interface RealtimeConfig {
     organizationId: string | null;
@@ -17,8 +17,8 @@ interface RealtimeConfig {
 }
 
 export function useRealtimeTransactions({ organizationId, enabled = true }: RealtimeConfig) {
-    const addTransaction = useDashboardStore((state) => state.addTransaction);
-    const updateStats = useDashboardStore((state) => state.updateStats);
+    const addTransaction = useDashboardStore((state: DashboardState) => state.addTransaction);
+    const updateStats = useDashboardStore((state: DashboardState) => state.updateStats);
     const channelRef = useRef<ReturnType<ReturnType<typeof createBrowserClient>['channel']> | null>(null);
 
     const handleInsert = useCallback((payload: { new: Record<string, unknown> }) => {
@@ -28,7 +28,7 @@ export function useRealtimeTransactions({ organizationId, enabled = true }: Real
         const transaction: Transaction = {
             id: String(record.id || `tx_${Date.now()}`),
             agentName: String(record.agent_name || 'Unknown Agent'),
-            amount: Number(record.amount_cents || 0) / 100,
+            amountCents: BigInt(String(record.amount_cents || 0)),
             merchant: String(record.merchant_name || 'Unknown Merchant'),
             status: (record.status as 'approved' | 'declined' | 'pending') || 'pending',
             timestamp: String(record.created_at || new Date().toISOString()),
@@ -101,7 +101,7 @@ export function useRealtimeTransactions({ organizationId, enabled = true }: Real
                     const transaction: Transaction = {
                         id: record.id,
                         agentName: record.agent_name || 'Unknown Agent',
-                        amount: Number(record.amount_cents || 0) / 100,
+                        amountCents: BigInt(String(record.amount_cents || 0)),
                         merchant: record.merchant_name || 'Unknown Merchant',
                         status: record.status || 'pending',
                         timestamp: record.created_at,
@@ -119,7 +119,8 @@ export function useRealtimeTransactions({ organizationId, enabled = true }: Real
 
             if (agents) {
                 const activeAgents = agents.filter((a) => a.is_active).length;
-                const totalSpend = agents.reduce((sum, a) => sum + (Number(a.current_spend_cents) / 100 || 0), 0);
+                const totalSpendCents = agents.reduce((sum, a) => sum + BigInt(a.current_spend_cents || 0), 0n);
+                const totalSpend = Number(totalSpendCents) / 100; // Convert to dollars for display
 
                 updateStats({
                     activeAgents,

@@ -34,7 +34,7 @@ const ENABLE_BILLING = process.env.ENABLE_BILLING === "true";
 interface ClientBillingResult {
     client_id: string;
     success: boolean;
-    amount_cents: number;
+    amount_cents: bigint;
     error?: string;
 }
 
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
                 results.push({
                     client_id,
                     success: false,
-                    amount_cents: 0,
+                    amount_cents: 0n,
                     error: "No subscription item configured",
                 });
                 continue;
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
                 results.push({
                     client_id,
                     success: true,
-                    amount_cents: Number(units),
+                    amount_cents: units,
                 });
 
                 totalAmountCents += units;
@@ -286,7 +286,7 @@ export async function POST(request: NextRequest) {
                 results.push({
                     client_id,
                     success: false,
-                    amount_cents: 0,
+                    amount_cents: 0n,
                     error: error.message,
                 });
             }

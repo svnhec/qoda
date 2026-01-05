@@ -264,7 +264,7 @@ export default function NewInvoicePage() {
               initial={{ opacity: 0, y: 40, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 100, damping: 20 }}
+              transition={{ type: "spring" as const, stiffness: 100, damping: 20 }}
             >
               {/* Divider with sparkle */}
               <div className="flex items-center gap-4">
@@ -311,7 +311,7 @@ export default function NewInvoicePage() {
                         className="text-4xl font-bold tabular-nums text-primary glow-text-green"
                         initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 200 }}
+                        transition={{ type: "spring" as const, stiffness: 200 }}
                       >
                         {formatCurrency(calculatedInvoice.total)}
                       </motion.span>
@@ -370,7 +370,7 @@ export default function NewInvoicePage() {
               className="mt-12"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: "spring", stiffness: 100 }}
+              transition={{ type: "spring" as const, stiffness: 100 }}
             >
               <div className="glass-card p-12 text-center relative overflow-hidden">
                 {/* Success glow */}
@@ -388,7 +388,7 @@ export default function NewInvoicePage() {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+                    transition={{ type: "spring" as const, stiffness: 200, delay: 0.1 }}
                   >
                     <CheckCircle className="h-16 w-16 text-primary mx-auto mb-6 glow-text-green" />
                   </motion.div>

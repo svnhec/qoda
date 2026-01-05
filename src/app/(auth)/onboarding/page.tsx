@@ -202,7 +202,7 @@ export default function OnboardingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ type: "spring", stiffness: 80, damping: 20 }}
+              transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
             >
               <div className="flex flex-col md:flex-row gap-8 items-start">
                 {/* Form */}
@@ -280,7 +280,7 @@ export default function OnboardingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ type: "spring", stiffness: 80, damping: 20 }}
+              transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
             >
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold mb-2">Define Margins</h1>
@@ -314,7 +314,7 @@ export default function OnboardingPage() {
                   key={markup[0]}
                   initial={{ scale: 0.98 }}
                   animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200 }}
+                  transition={{ type: "spring" as const, stiffness: 200 }}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-muted-foreground">AI Spend:</span>
@@ -322,12 +322,12 @@ export default function OnboardingPage() {
                   </div>
                   <div className="flex items-center justify-between mb-2 text-primary">
                     <span>Your Margin:</span>
-                    <span className="tabular-nums">+${(100 * (markup[0] / 100)).toFixed(2)}</span>
+                    <span className="tabular-nums">+${(100 * ((markup[0] ?? 0) / 100)).toFixed(2)}</span>
                   </div>
                   <div className="border-t border-white/10 pt-2 flex items-center justify-between font-bold">
                     <span>Client Billed:</span>
                     <span className="text-primary glow-text-green tabular-nums">
-                      ${(100 * (1 + markup[0] / 100)).toFixed(2)}
+                      ${(100 * (1 + (markup[0] ?? 0) / 100)).toFixed(2)}
                     </span>
                   </div>
                 </motion.div>

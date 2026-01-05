@@ -110,12 +110,32 @@ export default function ResetPasswordPage() {
     }
 
     setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 2000))
-    setIsLoading(false)
-    setSuccess(true)
 
-    // Redirect after success
-    setTimeout(() => router.push("/login"), 3000)
+    try {
+      // Update password using Supabase
+      const { createBrowserClient } = await import("@supabase/ssr");
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setIsLoading(false)
+      setSuccess(true)
+
+      // Redirect after success
+      setTimeout(() => router.push("/auth/login"), 3000)
+    } catch (error: any) {
+      setIsLoading(false)
+      setError(error.message || "Failed to update password")
+    }
   }
 
   if (success) {
@@ -128,7 +148,7 @@ export default function ResetPasswordPage() {
         )}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", stiffness: 80 }}
+        transition={{ type: "spring" as const, stiffness: 80 }}
         style={{ boxShadow: "0 0 80px oklch(0.8 0.2 155 / 0.15)" }}
       >
         <motion.div className="text-center" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -136,7 +156,7 @@ export default function ResetPasswordPage() {
             className="w-20 h-20 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center mx-auto mb-6 glow-green"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ type: "spring", delay: 0.2 }}
+            transition={{ type: "spring" as const, delay: 0.2 }}
           >
             <ShieldCheck className="w-10 h-10 text-primary" />
           </motion.div>
@@ -155,7 +175,7 @@ export default function ResetPasswordPage() {
       className={cn("relative z-10 w-full max-w-md mx-4", "glass-card-intense p-8 md:p-10", "border border-white/10")}
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ type: "spring", stiffness: 80, damping: 20 }}
+      transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
     >
       {/* Header */}
       <motion.div
@@ -230,7 +250,7 @@ export default function ResetPasswordPage() {
                 className={cn("h-full rounded-full", strength.color)}
                 initial={{ width: 0 }}
                 animate={{ width: `${(strength.level / 4) * 100}%` }}
-                transition={{ type: "spring", stiffness: 100 }}
+                transition={{ type: "spring" as const, stiffness: 100 }}
                 style={{
                   boxShadow: strength.level >= 4 ? "0 0 10px oklch(0.8 0.2 155 / 0.5)" : undefined,
                 }}

@@ -204,7 +204,7 @@ const rowVariants = {
     opacity: 1,
     x: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 15,
     },
@@ -217,7 +217,7 @@ const heroVariants = {
     opacity: 1,
     scale: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 80,
       damping: 20,
     },
@@ -286,7 +286,7 @@ export default function InvoicesPage() {
         <motion.div
           className="flex items-center gap-3"
           whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400 }}
+          transition={{ type: "spring" as const, stiffness: 400 }}
         >
           <Clock className="w-4 h-4 text-info" />
           <div>
@@ -297,7 +297,7 @@ export default function InvoicesPage() {
         <motion.div
           className="flex items-center gap-3"
           whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400 }}
+          transition={{ type: "spring" as const, stiffness: 400 }}
         >
           <AlertTriangle className="w-4 h-4 text-red-500" />
           <div>
@@ -308,7 +308,7 @@ export default function InvoicesPage() {
         <motion.div
           className="flex items-center gap-3"
           whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400 }}
+          transition={{ type: "spring" as const, stiffness: 400 }}
         >
           <Zap className="w-4 h-4 text-primary" />
           <div>

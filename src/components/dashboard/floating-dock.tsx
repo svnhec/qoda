@@ -24,7 +24,7 @@ const dockVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 20,
       staggerChildren: 0.05,
@@ -40,7 +40,7 @@ const itemVariants = {
     y: 0,
     scale: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 200,
       damping: 15,
     },
@@ -74,7 +74,7 @@ export function FloatingDock() {
                 <motion.div
                   whileHover={{ scale: 1.2, y: -4 }}
                   whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
                 >
                   <item.icon className={cn("w-5 h-5", isActive && "glow-text-green")} />
                 </motion.div>
@@ -83,7 +83,7 @@ export function FloatingDock() {
                   <motion.div
                     className="absolute -bottom-1 w-1 h-1 rounded-full bg-primary"
                     layoutId="dock-indicator"
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    transition={{ type: "spring" as const, stiffness: 500, damping: 30 }}
                   />
                 )}
               </Link>

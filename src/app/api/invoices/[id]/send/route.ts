@@ -36,8 +36,8 @@ export async function POST(
 
         if (!invoice) return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
 
-        // Logic to send email (Mock for MVP)
-        console.log(`[MOCK EMAIL] Sending Invoice ${invoiceId} to ${invoice.clients?.contact_email}`);
+        // Logic to send email (Mock for MVP - will be replaced with actual email service)
+        console.warn(`[MOCK EMAIL] Invoice ${invoiceId} → ${invoice.clients?.contact_email}`);
 
         // Update status
         await supabase

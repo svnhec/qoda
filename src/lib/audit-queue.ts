@@ -8,8 +8,35 @@
 
 // Redis not available - using in-memory fallback for audit queue
 // TODO: Install @upstash/redis for production distributed audit queue
-import { logAudit } from "@/lib/db/audit";
+import { createServiceClient } from "@/lib/supabase/server";
 import type { AuditLogInsert } from "@/lib/db/types";
+
+/**
+ * Direct database insert for audit logs (bypasses circular dependency)
+ * This is the ONLY place that directly writes to audit_log table
+ */
+async function insertAuditLogDirect(logData: AuditLogInsert): Promise<void> {
+  const supabase = createServiceClient();
+  const { error } = await supabase.from("audit_log").insert({
+    id: logData.id || crypto.randomUUID(),
+    action: logData.action,
+    resource_type: logData.resource_type,
+    resource_id: logData.resource_id ?? null,
+    user_id: logData.user_id ?? null,
+    organization_id: logData.organization_id ?? null,
+    description: logData.description ?? null,
+    error_message: logData.error_message ?? null,
+    metadata: logData.metadata ?? null,
+    state_before: logData.state_before ?? null,
+    state_after: logData.state_after ?? null,
+    ip_address: logData.ip_address ?? null,
+    user_agent: logData.user_agent ?? null,
+  });
+
+  if (error) {
+    throw new Error(`Audit log insert failed: ${error.message}`);
+  }
+}
 
 interface QueuedAuditLog {
   logData: AuditLogInsert;
@@ -63,8 +90,8 @@ export async function processAuditQueue(): Promise<{ processed: number; failed: 
 
     for (const queuedItem of itemsToProcess) {
       try {
-        // Try to log again
-        await logAudit(queuedItem.logData);
+        // Try to log again (direct insert to break circular dependency)
+        await insertAuditLogDirect(queuedItem.logData);
         processed++;
 
       } catch {
@@ -132,10 +159,12 @@ export async function getAuditQueueStatus(): Promise<{
 
 /**
  * Enhanced audit logging with queue fallback
+ * This is the main entry point - breaks circular dependency by calling insert directly
  */
 export async function resilientLogAudit(logData: AuditLogInsert): Promise<void> {
   try {
-    await logAudit(logData);
+    // Direct insert to break circular dependency with audit.ts
+    await insertAuditLogDirect(logData);
   } catch (error) {
     // Queue for retry instead of losing the audit log
     console.error("Audit log failed, queuing for retry:", error);

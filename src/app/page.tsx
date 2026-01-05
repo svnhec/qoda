@@ -24,7 +24,7 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 80,
       damping: 20,
     },
@@ -63,9 +63,10 @@ function TerminalTyper() {
     if (!showResponse) {
       // Type the command
       let charIndex = 0
+      const cmdText = cmd?.cmd ?? ""
       const typeInterval = setInterval(() => {
-        if (charIndex <= cmd.cmd.length) {
-          setDisplayText(cmd.cmd.slice(0, charIndex))
+        if (charIndex <= cmdText.length) {
+          setDisplayText(cmdText.slice(0, charIndex))
           charIndex++
         } else {
           clearInterval(typeInterval)
@@ -99,7 +100,7 @@ function TerminalTyper() {
           animate={{ opacity: 1 }}
           className="text-muted-foreground mt-2 whitespace-pre-line"
         >
-          {commands[currentCommand].response}
+          {commands[currentCommand]?.response}
         </motion.div>
       )}
     </div>
@@ -141,6 +142,7 @@ function LiveTransactionFeed() {
     const interval = setInterval(() => {
       setVisibleTxs((prev) => {
         const newTx = transactions[Math.floor(Math.random() * transactions.length)]
+        if (!newTx) return prev
         return [newTx, ...prev.slice(0, 2)]
       })
       setKey((k) => k + 1)
@@ -441,7 +443,7 @@ export default function LandingPage() {
           </div>
 
           {/* Visual: Transaction Declined Card */}
-          <motion.div className="relative" whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 300 }}>
+          <motion.div className="relative" whileHover={{ scale: 1.02 }} transition={{ type: "spring" as const, stiffness: 300 }}>
             <div className="absolute inset-0 bg-red-500/10 blur-[60px] rounded-3xl" />
             <div className="relative bg-black/60 backdrop-blur-xl border border-red-500/20 rounded-2xl p-6 glow-red">
               <div className="flex items-start gap-4">
@@ -487,7 +489,7 @@ export default function LandingPage() {
           <motion.div
             className="relative order-2 lg:order-1"
             whileHover={{ scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 300 }}
+            transition={{ type: "spring" as const, stiffness: 300 }}
           >
             <div className="absolute inset-0 bg-primary/10 blur-[60px] rounded-3xl" />
             <div className="relative space-y-4">
@@ -577,7 +579,7 @@ export default function LandingPage() {
           </div>
 
           {/* Visual: Live Transaction Feed */}
-          <motion.div className="relative" whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 300 }}>
+          <motion.div className="relative" whileHover={{ scale: 1.02 }} transition={{ type: "spring" as const, stiffness: 300 }}>
             <div className="absolute inset-0 bg-info/10 blur-[60px] rounded-3xl" />
             <div className="relative bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">

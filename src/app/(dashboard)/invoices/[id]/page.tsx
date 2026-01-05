@@ -152,7 +152,9 @@ export default function InvoiceDetailPage() {
   const [copied, setCopied] = useState(false)
   const [sending, setSending] = useState(false)
 
-  const invoice = extendedInvoices.find((i) => i.id === params.id) || mockInvoices[0]
+  const foundInvoice = extendedInvoices.find((i) => i.id === params.id) || mockInvoices[0]
+  // Ensure we always have a valid invoice
+  const invoice = foundInvoice!
   const lineItems = mockLineItems[invoice.id as keyof typeof mockLineItems] || mockLineItems.inv_1
   const config = statusConfig[invoice.status]
   const StatusIcon = config.icon
@@ -182,7 +184,7 @@ export default function InvoiceDetailPage() {
         className="fixed top-0 left-0 right-0 z-50 glass-card-intense border-b border-white/[0.06] px-6 py-4"
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+        transition={{ type: "spring" as const, stiffness: 100, damping: 20 }}
       >
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -266,7 +268,7 @@ export default function InvoiceDetailPage() {
         className="max-w-4xl mx-auto mt-24"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, type: "spring", stiffness: 80 }}
+        transition={{ delay: 0.2, type: "spring" as const, stiffness: 80 }}
       >
         {/* The Dark Mode Invoice "Paper" */}
         <div className="relative glass-card-intense border border-white/[0.08] rounded-2xl overflow-hidden">
@@ -281,7 +283,7 @@ export default function InvoiceDetailPage() {
             )}
             initial={{ scale: 0, rotate: 45 }}
             animate={{ scale: 1, rotate: 12 }}
-            transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+            transition={{ delay: 0.5, type: "spring" as const, stiffness: 200 }}
           >
             {invoice.status.toUpperCase()}
           </motion.div>
@@ -413,12 +415,12 @@ export default function InvoiceDetailPage() {
                             <div className="text-sm">{item.service}</div>
                             <div className="text-sm text-right font-mono text-muted-foreground">
                               {(
-                                item.calls ||
-                                item.queries ||
-                                item.messages ||
-                                item.images ||
-                                item.searches ||
-                                item.emails ||
+                                ("calls" in item ? item.calls : 0) ||
+                                ("queries" in item ? item.queries : 0) ||
+                                ("messages" in item ? item.messages : 0) ||
+                                ("images" in item ? item.images : 0) ||
+                                ("searches" in item ? item.searches : 0) ||
+                                ("emails" in item ? item.emails : 0) ||
                                 0
                               ).toLocaleString()}
                             </div>
@@ -462,7 +464,7 @@ export default function InvoiceDetailPage() {
                       )}
                       initial={{ scale: 0.8 }}
                       animate={{ scale: 1 }}
-                      transition={{ delay: 1.1, type: "spring", stiffness: 200 }}
+                      transition={{ delay: 1.1, type: "spring" as const, stiffness: 200 }}
                     >
                       {formatCurrency(invoice.total)}
                     </motion.span>

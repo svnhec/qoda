@@ -250,7 +250,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                 agent.status === "cancelled" && "glow-red",
               )}
               whileHover={{ scale: 1.02, rotateY: 5 }}
-              transition={{ type: "spring", stiffness: 300 }}
+              transition={{ type: "spring" as const, stiffness: 300 }}
             >
               {/* Card Background */}
               <div
@@ -542,7 +542,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                     }}
                     labelStyle={{ color: "oklch(0.6 0 0)", fontSize: 10 }}
                     itemStyle={{ color: "oklch(0.8 0.2 155)" }}
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, "Spend"]}
+                    formatter={(value) => [`$${Number(value ?? 0).toFixed(2)}`, "Spend"]}
                   />
                   <Area
                     type="monotone"
@@ -637,7 +637,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           {/* Quick Stats */}
           <div className="grid grid-cols-2 gap-4">
             <div className="glass-card p-4 text-center">
-              <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Today's Txns</span>
+              <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Today&apos;s Txns</span>
               <p className="text-2xl font-bold text-primary glow-text-green mt-1 font-mono">
                 {agentTransactions.filter((t) => t.status === "approved").length}
               </p>

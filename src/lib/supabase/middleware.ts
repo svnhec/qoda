@@ -69,7 +69,10 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     const pathname = request.nextUrl.pathname;
-    const isProtectedRoute = pathname.startsWith("/dashboard");
+
+    // Allow auth callback route to process without auth checks
+    const isAuthCallback = pathname === "/auth/callback";
+    const isProtectedRoute = pathname.startsWith("/dashboard") && !isAuthCallback;
 
     // If accessing protected route without auth, redirect to login
     if (isProtectedRoute && (!user || authError)) {

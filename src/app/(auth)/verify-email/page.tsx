@@ -18,6 +18,7 @@ export default function VerifyEmailPage() {
       const timer = setTimeout(() => setCooldown(cooldown - 1), 1000)
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [cooldown])
 
   const handleResend = async () => {
@@ -35,7 +36,7 @@ export default function VerifyEmailPage() {
       className={cn("relative z-10 w-full max-w-lg mx-4", "glass-card-intense p-8 md:p-10", "border border-primary/30")}
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ type: "spring", stiffness: 80, damping: 20 }}
+      transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
       style={{ boxShadow: "0 0 80px oklch(0.8 0.2 155 / 0.15)" }}
     >
       {/* Pulsing border animation */}
@@ -50,7 +51,7 @@ export default function VerifyEmailPage() {
         className="flex justify-center mb-8"
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2, type: "spring" }}
+        transition={{ delay: 0.2, type: "spring" as const }}
       >
         <div className="relative">
           <motion.div

@@ -31,12 +31,13 @@ export function TerminalTyper() {
     let timeout: NodeJS.Timeout;
     const cmd = commands[currentCommand];
 
-    if (!showResponse) {
+    if (!showResponse && cmd) {
       // Type the command
       let charIndex = 0;
+      const cmdText = cmd.cmd ?? "";
       const typeInterval = setInterval(() => {
-        if (charIndex <= cmd.cmd.length) {
-          setDisplayText(cmd.cmd.slice(0, charIndex));
+        if (charIndex <= cmdText.length) {
+          setDisplayText(cmdText.slice(0, charIndex));
           charIndex++;
         } else {
           clearInterval(typeInterval);
@@ -70,7 +71,7 @@ export function TerminalTyper() {
           animate={{ opacity: 1 }}
           className="text-muted-foreground mt-2 whitespace-pre-line"
         >
-          {commands[currentCommand].response}
+          {commands[currentCommand]?.response}
         </motion.div>
       )}
     </div>

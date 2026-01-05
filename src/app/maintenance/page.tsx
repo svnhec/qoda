@@ -6,7 +6,6 @@ import { Wrench, RefreshCw, Clock, ShieldCheck } from "lucide-react"
 
 export default function MaintenancePage() {
   const [progress, setProgress] = useState(0)
-  const [currentTask, setCurrentTask] = useState(0)
   const [dots, setDots] = useState("")
 
   const tasks = [
@@ -25,15 +24,6 @@ export default function MaintenancePage() {
         return prev + Math.random() * 2
       })
     }, 500)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  // Task progression
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTask((prev) => (prev < 2 ? prev : prev))
-    }, 3000)
 
     return () => clearInterval(interval)
   }, [])
@@ -143,13 +133,12 @@ export default function MaintenancePage() {
                   {task.status === "in_progress" && dots}
                 </span>
                 <span
-                  className={`font-mono text-xs ${
-                    task.status === "complete"
+                  className={`font-mono text-xs ${task.status === "complete"
                       ? "text-emerald-500"
                       : task.status === "in_progress"
                         ? "text-yellow-500"
                         : "text-zinc-600"
-                  }`}
+                    }`}
                 >
                   {task.status === "complete" ? "[DONE]" : task.status === "in_progress" ? "[RUNNING]" : "[QUEUED]"}
                 </span>

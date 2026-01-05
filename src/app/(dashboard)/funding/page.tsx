@@ -31,7 +31,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
+  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100 } },
 }
 
 const transactionHistory = [
@@ -115,7 +115,7 @@ export default function FundingPage() {
                 className="text-6xl lg:text-7xl font-bold text-primary glow-text-green tracking-tight"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3, type: "spring", stiffness: 100 }}
+                transition={{ delay: 0.3, type: "spring" as const, stiffness: 100 }}
               >
                 ${currentBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </motion.div>

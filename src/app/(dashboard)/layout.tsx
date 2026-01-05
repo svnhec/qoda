@@ -1,5 +1,5 @@
 import type React from "react"
-import { FloatingDock } from "@/components/floating-dock"
+import { FloatingDock } from "@/components/layout/floating-dock"
 
 export default function DashboardLayout({
   children,

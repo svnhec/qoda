@@ -56,7 +56,7 @@ export default function NewClientPage() {
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            transition={{ delay: 0.2, type: "spring" as const, stiffness: 200 }}
             className="mx-auto w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center"
           >
             <CheckCircle2 className="h-10 w-10 text-emerald-500" />
@@ -173,7 +173,7 @@ export default function NewClientPage() {
               </div>
               <Slider
                 value={[formData.markup]}
-                onValueChange={([value]) => setFormData((prev) => ({ ...prev, markup: value }))}
+                onValueChange={([value]) => setFormData((prev) => ({ ...prev, markup: value ?? prev.markup }))}
                 min={5}
                 max={50}
                 step={1}

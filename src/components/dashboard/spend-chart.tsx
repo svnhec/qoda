@@ -10,7 +10,7 @@ export function SpendChart() {
       className="glass-card p-6 glow-green relative overflow-hidden"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "spring", stiffness: 80, damping: 20 }}
+      transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
     >
       {/* Animated gradient overlay at top */}
       <motion.div

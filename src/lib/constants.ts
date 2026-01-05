@@ -5,13 +5,9 @@ import {
     Activity,
     Settings,
     LifeBuoy,
-    Zap,
     Server,
     FileText,
-    Bell,
     Wallet,
-    TrendingUp,
-    Shield,
     type LucideIcon,
 } from "lucide-react"
 

@@ -75,7 +75,7 @@ export default function NotFound() {
         <motion.div
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 100 }}
+          transition={{ type: "spring" as const, stiffness: 100 }}
           className="relative"
         >
           <h1 className="text-[150px] sm:text-[200px] font-mono font-bold text-emerald-500/20 leading-none select-none">

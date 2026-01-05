@@ -40,7 +40,7 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 15,
     },
@@ -68,7 +68,7 @@ export default function SettingsPage() {
           <h1 className="text-4xl font-mono font-bold tracking-tight mb-2">
             SYSTEM <span className="glow-text-green">CONFIG</span>
           </h1>
-          <p className="text-muted-foreground font-mono text-sm">// CONTROL PANEL v2.0</p>
+          <p className="text-muted-foreground font-mono text-sm">{`// CONTROL PANEL v2.0`}</p>
         </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -82,7 +82,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-mono font-bold">ORGANIZATION</h2>
-                  <p className="text-xs text-muted-foreground font-mono">// Agency Configuration</p>
+                  <p className="text-xs text-muted-foreground font-mono">{`// Agency Configuration`}</p>
                 </div>
               </div>
 
@@ -167,7 +167,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h2 className="text-lg font-mono font-bold">STRIPE ISSUING</h2>
-                    <p className="text-xs text-muted-foreground font-mono">// Payment Infrastructure</p>
+                    <p className="text-xs text-muted-foreground font-mono">{`// Payment Infrastructure`}</p>
                   </div>
                 </div>
                 <Badge className="bg-primary/20 text-primary border border-primary/30 font-mono text-xs px-3 py-1 glow-green">
@@ -218,7 +218,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-mono font-bold">ALERT CONFIG</h2>
-                  <p className="text-xs text-muted-foreground font-mono">// Notification Settings</p>
+                  <p className="text-xs text-muted-foreground font-mono">{`// Notification Settings`}</p>
                 </div>
               </div>
 
@@ -251,7 +251,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between py-2">
                       <div className="space-y-1">
                         <Label className="font-mono text-sm">{item.title}</Label>
-                        <p className="text-xs text-muted-foreground font-mono">// {item.desc}</p>
+                        <p className="text-xs text-muted-foreground font-mono">{`// ${item.desc}`}</p>
                       </div>
                       <Switch defaultChecked={item.defaultChecked} />
                     </div>

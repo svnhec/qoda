@@ -48,7 +48,7 @@ export function HeroMetric({ value, label, prefix = "$", suffix, trend, classNam
       className={cn("text-center", className)}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "spring", stiffness: 80, damping: 20 }}
+      transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
     >
       <motion.p
         className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-4"

@@ -38,13 +38,7 @@ function formatCurrency(amount: number) {
   }).format(amount)
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
-}
+// Removed unused formatDate function
 
 function formatPeriod(start: string, end: string) {
   const startDate = new Date(start)

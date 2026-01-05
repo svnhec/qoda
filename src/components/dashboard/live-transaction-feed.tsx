@@ -1,11 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { mockTransactions, type Transaction } from "@/lib/mock-data"
+import { formatCurrency, parseCents } from "@/lib/types/currency"
 import { cn } from "@/lib/utils"
-import { CheckCircle2, XCircle, Clock } from "lucide-react"
+import { CheckCircle2, XCircle, Clock, Receipt } from "lucide-react"
+import { type Transaction } from "@/hooks/use-dashboard-data"
+
+interface LiveTransactionFeedProps {
+    transactions?: Transaction[];
+}
 
 function formatTime(dateString: string) {
     const date = new Date(dateString)
@@ -17,19 +21,11 @@ function formatTime(dateString: string) {
     })
 }
 
-function formatCurrency(amount: number) {
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-    }).format(amount)
-}
 
 function TransactionRow({
     transaction,
-    isNew,
 }: {
     transaction: Transaction
-    isNew?: boolean
 }) {
     const statusConfig = {
         approved: { icon: CheckCircle2, color: "text-success" },
@@ -37,47 +33,44 @@ function TransactionRow({
         pending: { icon: Clock, color: "text-warning" },
     }
 
-    const config = statusConfig[transaction.status]
+    const config = statusConfig[transaction.status] || statusConfig.pending
     const StatusIcon = config.icon
+    const amountCents = parseCents(transaction.amount_cents)
 
     return (
         <motion.div
             initial={{ opacity: 0, x: -20, height: 0 }}
             animate={{ opacity: 1, x: 0, height: "auto" }}
             exit={{ opacity: 0, x: 20, height: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className={cn(
-                "flex items-center gap-4 py-3 border-b border-white/[0.04] transition-colors",
-                isNew && "bg-primary/5 border-primary/20"
-            )}
+            transition={{ type: "spring" as const, stiffness: 200, damping: 20 }}
+            className="flex items-center gap-4 py-3 border-b border-white/[0.04] transition-colors"
         >
             <motion.div
-                initial={isNew ? { scale: 0 } : { scale: 1 }}
                 animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 400, delay: 0.1 }}
+                transition={{ type: "spring" as const, stiffness: 400, delay: 0.1 }}
             >
                 <StatusIcon className={cn("h-4 w-4 shrink-0", config.color)} />
             </motion.div>
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                    <span className="text-sm truncate">{transaction.merchantName}</span>
-                    <motion.span
-                        className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-white/5"
-                        initial={
-                            isNew ? { opacity: 0, scale: 0.8 } : { opacity: 1, scale: 1 }
-                        }
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.15 }}
-                    >
-                        {transaction.agentName}
-                    </motion.span>
+                    <span className="text-sm truncate">{transaction.merchant_name || "Unknown Merchant"}</span>
+                    {transaction.agents && (
+                        <motion.span
+                            className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-white/5"
+                            initial={{ opacity: 1, scale: 1 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.15 }}
+                        >
+                            {transaction.agents.name}
+                        </motion.span>
+                    )}
                 </div>
             </div>
 
             <motion.div
                 className="text-right shrink-0"
-                initial={isNew ? { opacity: 0, x: 10 } : { opacity: 1, x: 0 }}
+                initial={{ opacity: 1, x: 0 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
             >
@@ -89,73 +82,56 @@ function TransactionRow({
                             : "text-foreground"
                     )}
                 >
-                    {formatCurrency(transaction.amount)}
+                    {formatCurrency(amountCents)}
                 </p>
                 <p className="text-[10px] text-muted-foreground tabular-nums">
-                    {formatTime(transaction.createdAt)}
+                    {formatTime(transaction.created_at)}
                 </p>
             </motion.div>
         </motion.div>
     )
 }
 
-export function LiveTransactionFeed() {
-    const [transactions, setTransactions] = useState(mockTransactions)
-    const [newTxId, setNewTxId] = useState<string | null>(null)
-
-    useEffect(() => {
-        const merchants = [
-            "OpenAI",
-            "Anthropic",
-            "AWS",
-            "Google Cloud",
-            "Azure",
-            "Pinecone",
-            "Vercel",
-        ]
-        const agents = [
-            "Lead Gen Bot v2",
-            "Support Agent Alpha",
-            "Content Creator Pro",
-            "Data Processor X1",
-        ]
-        const clients = [
-            "TechCorp Industries",
-            "Nexus Ventures",
-            "Quantum Dynamics",
-            "Stellar Systems",
-        ]
-
-        const interval = setInterval(() => {
-            const newTx: Transaction = {
-                id: `tx_${Date.now()}`,
-                agentId: "ag_1",
-                agentName: agents[Math.floor(Math.random() * agents.length)],
-                clientId: "cl_1",
-                clientName: clients[Math.floor(Math.random() * clients.length)],
-                amount: Math.round((Math.random() * 100 + 5) * 100) / 100,
-                currency: "USD",
-                merchantName: merchants[Math.floor(Math.random() * merchants.length)],
-                merchantMcc: "7372",
-                status: Math.random() > 0.1 ? "approved" : "declined",
-                createdAt: new Date().toISOString(),
-            }
-
-            setNewTxId(newTx.id)
-            setTransactions((prev) => [newTx, ...prev.slice(0, 19)])
-
-            setTimeout(() => setNewTxId(null), 2000)
-        }, 4000)
-
-        return () => clearInterval(interval)
-    }, [])
+export function LiveTransactionFeed({ transactions = [] }: LiveTransactionFeedProps) {
+    // Empty state
+    if (transactions.length === 0) {
+        return (
+            <motion.div
+                className="glass-card p-6 h-full"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring" as const, stiffness: 100, damping: 15 }}
+            >
+                <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Transaction Feed
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                        <motion.span
+                            className="w-2 h-2 rounded-full bg-muted-foreground"
+                        />
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                            Waiting
+                        </span>
+                    </div>
+                </div>
+                <div className="flex flex-col items-center justify-center h-[300px] text-center">
+                    <Receipt className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                    <p className="text-sm text-muted-foreground">No transactions yet</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">
+                        Transactions will appear here in real-time
+                    </p>
+                </div>
+            </motion.div>
+        )
+    }
 
     return (
         <motion.div
             className="glass-card p-6 h-full"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 100, damping: 15 }}
+            transition={{ type: "spring" as const, stiffness: 100, damping: 15 }}
         >
             <div className="flex items-center justify-between mb-4">
                 <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -178,7 +154,6 @@ export function LiveTransactionFeed() {
                         <TransactionRow
                             key={tx.id}
                             transaction={tx}
-                            isNew={tx.id === newTxId}
                         />
                     ))}
                 </AnimatePresence>

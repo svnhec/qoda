@@ -52,7 +52,7 @@ const cardVariants = {
     y: 0,
     rotateX: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 80,
       damping: 15,
     },
@@ -65,7 +65,7 @@ const rowVariants = {
     opacity: 1,
     x: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 15,
     },
@@ -110,7 +110,7 @@ export default function CardsPage() {
         className="flex flex-col items-center justify-center py-12 md:py-16"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", stiffness: 80, damping: 20 }}
+        transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
       >
         <motion.div
           className="text-center relative"
@@ -156,7 +156,7 @@ export default function CardsPage() {
         <motion.div
           className="flex items-center gap-3"
           whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400 }}
+          transition={{ type: "spring" as const, stiffness: 400 }}
         >
           <Shield className="w-4 h-4 text-primary" />
           <div>
@@ -167,7 +167,7 @@ export default function CardsPage() {
         <motion.div
           className="flex items-center gap-3"
           whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400 }}
+          transition={{ type: "spring" as const, stiffness: 400 }}
         >
           <TrendingUp className="w-4 h-4 text-info" />
           <div>
@@ -178,7 +178,7 @@ export default function CardsPage() {
         <motion.div
           className="flex items-center gap-3"
           whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400 }}
+          transition={{ type: "spring" as const, stiffness: 400 }}
         >
           <Zap className="w-4 h-4 text-warning" />
           <div>
@@ -262,7 +262,7 @@ export default function CardsPage() {
                   whileHover={{
                     scale: 1.03,
                     rotateY: 2,
-                    transition: { type: "spring", stiffness: 300 },
+                    transition: { type: "spring" as const, stiffness: 300 },
                   }}
                   className="cursor-pointer perspective-1000"
                   onClick={() => setSelectedCard(agent)}

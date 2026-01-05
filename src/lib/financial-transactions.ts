@@ -28,7 +28,6 @@ export async function processFundingTransaction(params: {
   userId?: string;
 }): Promise<FinancialTransactionResult> {
   const supabase = createServiceClient();
-  const transactionId = crypto.randomUUID();
   const stripeTransferId = params.stripeTransferId || `funding_${Date.now()}`;
 
   try {
@@ -37,7 +36,7 @@ export async function processFundingTransaction(params: {
       .from("funding_transactions")
       .insert({
         organization_id: params.organizationId,
-        amount_cents: params.amountCents.toString(),
+        amount_cents: params.amountCents,
         stripe_transfer_id: stripeTransferId,
         status: 'pending',
         description: params.description || 'Funding transaction'
@@ -94,11 +93,14 @@ export async function processFundingTransaction(params: {
     console.error("Funding transaction failed:", message);
 
     // Try to mark as failed if it exists
-    await supabase
-      .from("funding_transactions")
-      .update({ status: 'failed' })
-      .eq("stripe_transfer_id", stripeTransferId)
-      .catch(err => console.error("Failed to mark transaction as failed:", err));
+    try {
+      await supabase
+        .from("funding_transactions")
+        .update({ status: 'failed' })
+        .eq("stripe_transfer_id", stripeTransferId);
+    } catch (err) {
+      console.error("Failed to mark transaction as failed:", err);
+    }
 
     return {
       success: false,

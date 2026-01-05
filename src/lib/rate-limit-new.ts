@@ -48,7 +48,7 @@ function cleanupRateLimitStore() {
   }
 
   if (cleaned > 0) {
-    console.log(`Rate limit cleanup: removed ${cleaned} expired entries`);
+    // Rate limit cleanup silent
   }
 }
 

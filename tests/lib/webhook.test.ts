@@ -3,7 +3,7 @@ import { verifyWebhookSignature } from "@/lib/stripe/webhook";
 jest.mock("@/lib/stripe/client", () => ({
   getStripeClient: jest.fn(() => ({
     webhooks: {
-      constructEvent: jest.fn((rawBody, signature, secret) => {
+      constructEvent: jest.fn((_rawBody, signature, _secret) => {
         if (signature === "invalidSig") {
           throw new Error("Invalid signature");
         }

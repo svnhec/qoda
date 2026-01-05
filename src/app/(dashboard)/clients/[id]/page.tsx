@@ -63,7 +63,7 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 15,
     },
@@ -76,7 +76,7 @@ const cardVariants = {
     opacity: 1,
     scale: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 15,
     },
@@ -169,7 +169,7 @@ export default function ClientDetailPage() {
             className="text-5xl lg:text-6xl font-bold font-mono glow-text tabular-nums"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, type: "spring", stiffness: 100 }}
+            transition={{ delay: 0.3, type: "spring" as const, stiffness: 100 }}
           >
             {formatCurrency(totalAllTimeSpend)}
           </motion.p>
@@ -203,11 +203,11 @@ export default function ClientDetailPage() {
             icon: Percent,
             suffix: "%",
           },
-        ].map((stat, index) => (
+        ].map((stat, _index) => (
           <motion.div
             key={stat.label}
             variants={cardVariants}
-            whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 300 } }}
+            whileHover={{ scale: 1.02, transition: { type: "spring" as const, stiffness: 300 } }}
             className={cn(
               "relative p-4 rounded-xl overflow-hidden",
               "bg-black/40 backdrop-blur-xl",
@@ -301,7 +301,7 @@ export default function ClientDetailPage() {
                   animate="visible"
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: index * 0.05 }}
-                  whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 300 } }}
+                  whileHover={{ scale: 1.02, transition: { type: "spring" as const, stiffness: 300 } }}
                   className={cn(
                     "relative p-5 rounded-xl overflow-hidden cursor-pointer",
                     "bg-black/40 backdrop-blur-xl",

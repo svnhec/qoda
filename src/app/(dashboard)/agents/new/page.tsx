@@ -91,7 +91,7 @@ export default function NewAgentPage() {
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            transition={{ delay: 0.2, type: "spring" as const, stiffness: 200 }}
             className="mx-auto w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center"
           >
             <CheckCircle2 className="h-10 w-10 text-emerald-500" />
@@ -290,7 +290,7 @@ export default function NewAgentPage() {
                 </div>
                 <Slider
                   value={[formData.dailyLimit]}
-                  onValueChange={([value]) => setFormData((prev) => ({ ...prev, dailyLimit: value }))}
+                  onValueChange={([value]) => setFormData((prev) => ({ ...prev, dailyLimit: value ?? prev.dailyLimit }))}
                   min={50}
                   max={5000}
                   step={50}
@@ -314,7 +314,7 @@ export default function NewAgentPage() {
                 </div>
                 <Slider
                   value={[formData.monthlyLimit]}
-                  onValueChange={([value]) => setFormData((prev) => ({ ...prev, monthlyLimit: value }))}
+                  onValueChange={([value]) => setFormData((prev) => ({ ...prev, monthlyLimit: value ?? prev.monthlyLimit }))}
                   min={500}
                   max={50000}
                   step={500}

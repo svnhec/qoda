@@ -65,7 +65,7 @@ export function StripeReturnContent() {
       className="w-full max-w-xl"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 80, damping: 20 }}
+      transition={{ type: "spring" as const, stiffness: 80, damping: 20 }}
     >
       <div
         className={`rounded-2xl overflow-hidden border-2 transition-colors duration-500 ${
@@ -135,7 +135,7 @@ export function StripeReturnContent() {
                     className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center glow-green"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ type: "spring", delay: 0.4 }}
+                    transition={{ type: "spring" as const, delay: 0.4 }}
                   >
                     <ShieldCheck className="w-10 h-10 text-primary" />
                   </motion.div>
@@ -170,7 +170,7 @@ export function StripeReturnContent() {
                     className="w-20 h-20 rounded-full bg-red-500/10 border-2 border-red-500 flex items-center justify-center glow-red"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ type: "spring", delay: 0.4 }}
+                    transition={{ type: "spring" as const, delay: 0.4 }}
                   >
                     <ShieldX className="w-10 h-10 text-red-500" />
                   </motion.div>
