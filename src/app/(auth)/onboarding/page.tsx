@@ -193,7 +193,7 @@ export default function OnboardingPage() {
 
       {/* Right side - Step Content */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-10">
-        <AnimatePresence mode="wait">
+        {/* <AnimatePresence mode="wait"> */}
           {/* Step 1: Agency Identity */}
           {currentStep === "identity" && (
             <motion.div
@@ -228,7 +228,7 @@ export default function OnboardingPage() {
                         onFocus={() => console.log('Input focused')}
                         onBlur={() => console.log('Input blurred')}
                         placeholder="Acme AI Agency"
-                        className="bg-white/20 border border-white/20 text-white placeholder:text-gray-300 h-12 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="bg-white/20 border border-white/20 text-white placeholder:text-gray-300 h-12 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-primary cursor-text pointer-events-auto relative z-10"
                         autoFocus
                       />
 
@@ -364,7 +364,7 @@ export default function OnboardingPage() {
               </Button>
             </motion.div>
           )}
-        </AnimatePresence>
+        {/* </AnimatePresence> */}
       </div>
     </div>
   )
