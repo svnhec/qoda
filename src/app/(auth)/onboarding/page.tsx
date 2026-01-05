@@ -81,6 +81,19 @@ export default function OnboardingPage() {
     console.log('currentStep changed to:', currentStep)
   }, [currentStep])
 
+  // Global click handler for debugging
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      console.log('Global click detected on:', e.target)
+    }
+
+    document.addEventListener('click', handleGlobalClick)
+    return () => document.removeEventListener('click', handleGlobalClick)
+  }, [])
+
+  // Test that component is working
+  console.log('OnboardingPage rendered, agencyName:', agencyName, 'currentStep:', currentStep)
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex">
       {/* Debug indicator */}
@@ -294,15 +307,24 @@ export default function OnboardingPage() {
                   </button>
 
                   <button
-                    onClick={() => {
-                      console.log('Continue button clicked, agencyName:', agencyName, 'disabled:', !agencyName.trim())
-                      handleNext()
+                    onClick={(e) => {
+                      e.preventDefault()
+                      console.log('Continue button clicked - EVENT FIRED')
+                      console.log('agencyName:', agencyName, 'trimmed:', agencyName.trim())
+                      console.log('disabled check:', !agencyName.trim())
+
+                      if (agencyName.trim()) {
+                        console.log('Calling handleNext...')
+                        handleNext()
+                      } else {
+                        console.log('Button is disabled - no agency name')
+                      }
                     }}
                     disabled={!agencyName.trim()}
                     style={{
                       width: '100%',
                       height: '48px',
-                      backgroundColor: 'hsl(var(--primary))',
+                      backgroundColor: agencyName.trim() ? 'hsl(var(--primary))' : '#666',
                       color: 'hsl(var(--primary-foreground))',
                       border: 'none',
                       borderRadius: '6px',
